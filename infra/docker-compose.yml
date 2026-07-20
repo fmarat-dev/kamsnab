@@ -1,9 +1,12 @@
 # Продакшен-стек для VPS. Локально не запускается — локальная разработка Directus
 # идёт на SQLite без Docker, см. cms/README.md.
 #
-# Использование на сервере:
+# Использование на сервере (один раз, вручную):
 #   cp .env.example .env   # заполнить секреты
-#   docker compose up -d
+#   docker compose up -d --build
+#
+# Дальше деплой автоматический по пушу в main, см. .github/workflows/deploy.yml —
+# он просто повторяет `docker compose up -d --build` на сервере по SSH.
 
 services:
   postgres:
@@ -28,8 +31,8 @@ services:
   directus:
     image: directus/directus:11
     restart: unless-stopped
-    ports:
-      - "8055:8055"
+    # Порт наружу не публикуется — снаружи Directus доступен только через
+    # caddy (cms.kamsnab.ru), см. Caddyfile.
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,6 +67,56 @@ services:
       - directus-uploads:/directus/uploads
       - ../cms/schema:/directus/schema
 
+  site:
+    build:
+      context: ..
+      dockerfile: apps/site/Dockerfile
+      args:
+        NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL}
+    restart: unless-stopped
+    depends_on:
+      - directus
+
+  miniapp-telegram:
+    build:
+      context: ..
+      dockerfile: apps/miniapp-telegram/Dockerfile
+      args:
+        VITE_DIRECTUS_URL: ${VITE_DIRECTUS_URL}
+        VITE_MANAGER_TELEGRAM_USERNAME: ${VITE_MANAGER_TELEGRAM_USERNAME}
+    restart: unless-stopped
+    depends_on:
+      - directus
+
+  miniapp-max:
+    build:
+      context: ..
+      dockerfile: apps/miniapp-max/Dockerfile
+      args:
+        VITE_DIRECTUS_URL: ${VITE_DIRECTUS_URL}
+        VITE_MANAGER_MAX_LINK: ${VITE_MANAGER_MAX_LINK}
+    restart: unless-stopped
+    depends_on:
+      - directus
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - site
+      - miniapp-telegram
+      - miniapp-max
+      - directus
+
 volumes:
   postgres-data:
   directus-uploads:
+  caddy-data:
+  caddy-config:

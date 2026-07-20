@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/tsconfig.tsbuildinfo
+cms/database
+cms/uploads
+.git
+*.log
+.DS_Store
