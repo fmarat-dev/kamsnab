@@ -1,0 +1,17 @@
+{
+  "name": "kamsnab",
+  "private": true,
+  "packageManager": "pnpm@11.13.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:site": "pnpm --filter @kamsnab/site dev",
+    "dev:tg": "pnpm --filter @kamsnab/miniapp-telegram dev",
+    "dev:max": "pnpm --filter @kamsnab/miniapp-max dev",
+    "dev:cms": "pnpm --filter @kamsnab/cms dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

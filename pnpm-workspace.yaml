@@ -1,0 +1,17 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "cms"
+overrides:
+  isolated-vm: "^6.1.2"
+allowBuilds:
+  argon2: true
+  better-sqlite3: true
+  braintrust: false
+  esbuild: true
+  isolated-vm: true
+  oracledb: false
+  protobufjs: true
+  sharp: true
+  sqlite3: true
+  vue-demi: true

@@ -1,0 +1,20 @@
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+build/
+*.log
+*.tsbuildinfo
+
+# Directus local dev
+cms/database/
+cms/uploads/
+cms/.env
+
+# env files
+.env
+.env.local
+*.local
+
+.DS_Store

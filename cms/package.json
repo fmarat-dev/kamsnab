@@ -1,0 +1,19 @@
+{
+  "name": "@kamsnab/cms",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "bootstrap": "directus bootstrap",
+    "dev": "directus start",
+    "schema:snapshot": "directus schema snapshot ./schema/snapshot.yaml --yes",
+    "schema:apply": "directus schema apply ./schema/snapshot.yaml --yes",
+    "schema:seed": "node --env-file=.env schema/seed.mjs",
+    "content:seed": "node --env-file=.env schema/seed-content.mjs"
+  },
+  "dependencies": {
+    "@directus/sdk": "^17.0.0",
+    "cheerio": "^1.2.0",
+    "directus": "^11.0.0",
+    "sqlite3": "^5.1.7"
+  }
+}

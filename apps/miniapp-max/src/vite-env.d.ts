@@ -1,0 +1,10 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_DIRECTUS_URL: string;
+  readonly VITE_MANAGER_MAX_LINK: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
