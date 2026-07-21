@@ -133,7 +133,13 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {forklifts.map((product) => (
-              <ProductCard key={product.slug} href={`/catalog/${product.slug}`} showCompare product={toCardProps(product)} />
+              <ProductCard
+                key={product.slug}
+                href={`/catalog/${product.slug}`}
+                showCompare
+                showFavorite
+                product={toCardProps(product)}
+              />
             ))}
             {forklifts.length === 0 && (
               <p className="text-ink-400">Каталог пока пуст — наполните коллекцию products в Directus.</p>
@@ -157,6 +163,7 @@ export default async function HomePage() {
                   key={product.slug}
                   href={`/catalog/${product.slug}`}
                   showCompare
+                  showFavorite
                   product={toCardProps(product, "Спецпредложение")}
                 />
               ))}

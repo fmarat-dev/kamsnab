@@ -121,6 +121,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 key={item.slug}
                 href={`/catalog/${item.slug}`}
                 showCompare
+                showFavorite
                 product={{
                   slug: item.slug,
                   title: item.title,

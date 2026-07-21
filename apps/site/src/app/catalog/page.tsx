@@ -54,6 +54,7 @@ function CatalogContent() {
               key={product.slug}
               href={`/catalog/${product.slug}`}
               showCompare
+              showFavorite
               product={{
                 slug: product.slug,
                 title: product.title,
