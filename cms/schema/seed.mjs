@@ -14,7 +14,11 @@ import {
   readPolicies,
   createPolicy,
   createPermission,
-  readPermissions
+  readPermissions,
+  readFlows,
+  createFlow,
+  updateFlow,
+  createOperation
 } from "@directus/sdk";
 
 const url = process.env.PUBLIC_URL ?? "http://localhost:8055";
@@ -241,6 +245,57 @@ async function main() {
     );
   }
   await ensureDisplayTemplate("leads", "{{name}} — {{phone}}");
+
+  // --- Уведомление менеджеру на почту при новой заявке ---
+  // Само письмо не уйдёт, пока в .env не заполнены EMAIL_TRANSPORT/EMAIL_SMTP_*
+  // (см. .env.example) — Directus по умолчанию использует sendmail, которого
+  // здесь нет.
+  const existingFlows = await authed.request(readFlows());
+  let leadEmailFlow = existingFlows.find((f) => f.name === "Заявка создана — письмо менеджеру");
+
+  if (!leadEmailFlow) {
+    leadEmailFlow = await authed.request(
+      createFlow({
+        name: "Заявка создана — письмо менеджеру",
+        icon: "mail",
+        status: "active",
+        trigger: "event",
+        accountability: "all",
+        options: {
+          type: "action",
+          scope: ["items.create"],
+          collections: ["leads"]
+        }
+      })
+    );
+
+    const operation = await authed.request(
+      createOperation({
+        name: "Письмо менеджеру",
+        key: "send_manager_email",
+        type: "mail",
+        position_x: 19,
+        position_y: 1,
+        flow: leadEmailFlow.id,
+        options: {
+          to: ["kam-snab@mail.ru"],
+          subject: "Новая заявка с сайта КАМСНАБ",
+          type: "wysiwyg",
+          body:
+            "<p>Имя: {{$trigger.payload.name}}</p>" +
+            "<p>Телефон: {{$trigger.payload.phone}}</p>" +
+            "<p>Комментарий: {{$trigger.payload.message}}</p>" +
+            "<p>Источник: {{$trigger.payload.source}}</p>" +
+            "<p>Товар (ID): {{$trigger.payload.product}}</p>"
+        }
+      })
+    );
+
+    await authed.request(updateFlow(leadEmailFlow.id, { operation: operation.id }));
+    console.log('+ flow "Заявка создана — письмо менеджеру" создан');
+  } else {
+    console.log('- flow "Заявка создана — письмо менеджеру" уже существует, пропускаю');
+  }
 
   await ensureCollection(
     "settings",

@@ -63,6 +63,14 @@ services:
       TELEGRAM_MANAGER_CHAT_ID: ${TELEGRAM_MANAGER_CHAT_ID}
       MAX_BOT_TOKEN: ${MAX_BOT_TOKEN}
       MAX_MANAGER_CHAT_ID: ${MAX_MANAGER_CHAT_ID}
+
+      EMAIL_TRANSPORT: ${EMAIL_TRANSPORT}
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT}
+      EMAIL_SMTP_SECURE: ${EMAIL_SMTP_SECURE}
+      EMAIL_SMTP_USER: ${EMAIL_SMTP_USER}
+      EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
     volumes:
       - directus-uploads:/directus/uploads
       - ../cms/schema:/directus/schema
