@@ -32,7 +32,8 @@ export const pageHighlights: Record<string, HighlightItem[]> = {
     {
       image: "/service/repair.jpg",
       title: "Ремонт и обслуживание техники",
-      text: "ТО, ремонт гидравлики, ходовой части, двигателей и электрооборудования складской техники."
+      text: "ТО, ремонт гидравлики, ходовой части, двигателей и электрооборудования складской техники.",
+      href: "/pages/repair"
     },
     {
       image: "/service/onsite.jpg",
