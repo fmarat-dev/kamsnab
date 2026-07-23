@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 export interface HeaderProps {
@@ -6,9 +8,21 @@ export interface HeaderProps {
   navLinks: { href: string; label: string }[];
   iconLinks?: { href: string; label: string; icon: ReactNode }[];
   ctaHref?: string;
+  ctaLabel?: string;
+  onCtaClick?: () => void;
 }
 
-export function Header({ logo, phone, navLinks, iconLinks = [], ctaHref = "#contact" }: HeaderProps) {
+export function Header({
+  logo,
+  phone,
+  navLinks,
+  iconLinks = [],
+  ctaHref = "#contact",
+  ctaLabel = "Заказать звонок",
+  onCtaClick
+}: HeaderProps) {
+  const ctaClassName = "rounded-card bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600";
+
   return (
     <header className="sticky top-0 z-10 border-b border-ink-100 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-6xl border-b border-ink-100 px-4 py-2">
@@ -47,12 +61,15 @@ export function Header({ logo, phone, navLinks, iconLinks = [], ctaHref = "#cont
           <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="hidden text-sm font-semibold text-ink-800 sm:block">
             {phone}
           </a>
-          <a
-            href={ctaHref}
-            className="rounded-card bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600"
-          >
-            Заказать звонок
-          </a>
+          {onCtaClick ? (
+            <button type="button" onClick={onCtaClick} className={ctaClassName}>
+              {ctaLabel}
+            </button>
+          ) : (
+            <a href={ctaHref} className={ctaClassName}>
+              {ctaLabel}
+            </a>
+          )}
         </div>
       </div>
     </header>

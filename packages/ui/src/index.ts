@@ -18,6 +18,9 @@ export type { FooterProps } from "./components/Footer";
 
 export { Container } from "./components/Container";
 
+export { Modal } from "./components/Modal";
+export type { ModalProps } from "./components/Modal";
+
 export {
   COMPARE_LIMIT,
   useCompareSlugs,

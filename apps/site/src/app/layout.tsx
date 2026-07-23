@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Heart, GitCompare } from "lucide-react";
-import { Header, Footer } from "@kamsnab/ui";
+import { Footer } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
 import { siteUrl, siteName } from "@/lib/site";
+import { SiteHeader } from "./SiteHeader";
 import "./globals.css";
 
 const defaultDescription =
@@ -66,12 +67,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        <Header
+        <SiteHeader
           logo={<span className="text-xl font-extrabold text-brand-600">КАМСНАБ</span>}
           phone={settings?.phone ?? "+7 (___) ___-__-__"}
           navLinks={navLinks}
           iconLinks={iconLinks}
-          ctaHref="/contacts"
         />
         <main>{children}</main>
         <Footer
