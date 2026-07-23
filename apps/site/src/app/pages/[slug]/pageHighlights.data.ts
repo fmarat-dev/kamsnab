@@ -38,7 +38,8 @@ export const pageHighlights: Record<string, HighlightItem[]> = {
     {
       image: "/service/onsite.jpg",
       title: "Выездной ремонт",
-      text: "Сервисная бригада выезжает на объект для диагностики и устранения неисправностей."
+      text: "Сервисная бригада выезжает на объект для диагностики и устранения неисправностей.",
+      href: "/pages/onsite-repair"
     },
     {
       image: "/service/principles.jpg",
