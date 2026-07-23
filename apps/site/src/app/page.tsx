@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PackageCheck, ShieldCheck, Truck } from "lucide-react";
 import { assetUrl, getProductBadge, type Product } from "@kamsnab/api-client";
 import { Container, Button, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" }
+};
 
 const advantages = [
   {

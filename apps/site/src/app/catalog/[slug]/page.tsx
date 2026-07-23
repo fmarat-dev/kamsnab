@@ -1,11 +1,37 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { assetUrl, getProductBadge, type ProductAttribute } from "@kamsnab/api-client";
 import { Container, Breadcrumbs, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
+import { siteUrl } from "@/lib/site";
 import { ProductLeadForm } from "./ProductLeadForm";
 import { ProductGallery } from "./ProductGallery";
 import { ProductActions } from "./ProductActions";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await kamsnab.getProductBySlug(slug);
+  if (!product) return {};
+
+  const category = typeof product.category === "object" ? product.category : undefined;
+  const description =
+    product.short_description ??
+    `${product.title}${category ? ` — ${category.name}` : ""}. Продажа и доставка в КАМСНАБ.`;
+  const imageUrl = assetUrl(directusUrl, product.image);
+
+  return {
+    title: product.title,
+    description,
+    alternates: { canonical: `/catalog/${product.slug}` },
+    openGraph: {
+      title: product.title,
+      description,
+      url: `${siteUrl}/catalog/${product.slug}`,
+      images: imageUrl ? [{ url: imageUrl }] : undefined
+    }
+  };
+}
 
 function groupAttributes(attributes: ProductAttribute[]) {
   const groups = new Map<string, ProductAttribute[]>();
@@ -39,8 +65,30 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         .slice(0, 8)
     : [];
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    sku: product.sku ?? undefined,
+    description: product.short_description ?? undefined,
+    image: galleryImages.length > 0 ? galleryImages : undefined,
+    category: category?.name,
+    offers: {
+      "@type": "Offer",
+      url: `${siteUrl}/catalog/${product.slug}`,
+      priceCurrency: "RUB",
+      price: product.price ?? undefined,
+      availability: "https://schema.org/InStock"
+    }
+  };
+
   return (
     <Container className="py-10">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <Breadcrumbs
         items={[
           { label: "Каталог", href: "/catalog" },

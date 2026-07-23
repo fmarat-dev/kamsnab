@@ -1,9 +1,27 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Container, Breadcrumbs } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
 import { ServiceLeadForm } from "./ServiceLeadForm";
 import { PageHighlights } from "./PageHighlights";
 import { pageHighlights } from "./pageHighlights.data";
+
+function excerptFromHtml(html: string, maxLength = 160): string {
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const page = await kamsnab.getPageBySlug(slug);
+  if (!page) return {};
+
+  return {
+    title: page.title,
+    description: excerptFromHtml(page.content),
+    alternates: { canonical: `/pages/${page.slug}` }
+  };
+}
 
 export default async function InfoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

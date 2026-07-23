@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { Container, Breadcrumbs } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
 import { ContactLeadForm } from "./ContactLeadForm";
+
+export const metadata: Metadata = {
+  title: "Контакты",
+  description: "Контакты КАМСНАБ в Чебоксарах: адрес, телефон, email. Закажите звонок или оставьте заявку.",
+  alternates: { canonical: "/contacts" }
+};
 
 export default async function ContactsPage() {
   const settings = await kamsnab.getSettings().catch(() => null);
