@@ -1,16 +1,26 @@
-// Сидинг статичных инфостраниц (delivery/payment/service/repair) в коллекцию
-// pages. Идемпотентно — пропускает страницы, у которых slug уже существует.
+// Сидинг статичных инфостраниц (delivery/payment/service/repair/...) и
+// категории «Навесное оборудование» (не покрывается импортом с oxlift.ru
+// через schema/oxlift/scrape.mjs — это отдельный, курируемый вручную набор
+// товаров со своими фото в schema/source-images/). Идемпотентно — пропускает
+// всё, что уже существует по slug.
 //
-// ВАЖНО: этот файл раньше также содержал сидинг категорий/товаров/settings
-// демо-данными с раннего этапа проекта (до полного переноса каталога с
-// oxlift.ru через schema/oxlift/scrape.mjs). Эта часть была неидемпотентна
-// по отношению к реальному каталогу (проверяла свои же slug'ы вроде
-// "electric"/"diesel"/"stackers", а не реальную таксономию) и при повторном
-// запуске создавала дублирующиеся категории/товары поверх настоящего
-// каталога. Убрана намеренно — не восстанавливать без переработки.
+// ВАЖНО: этот файл раньше также содержал сидинг ДРУГИХ категорий/товаров/
+// settings демо-данными с раннего этапа проекта (до полного переноса
+// каталога с oxlift.ru). Та часть была неидемпотентна по отношению к
+// реальному каталогу (проверяла свои же slug'ы вроде "electric"/"diesel"/
+// "stackers", а не реальную таксономию) и при повторном запуске создавала
+// дублирующиеся категории/товары поверх настоящего каталога — убрана
+// намеренно. Категория "attachments" ниже — не та проблема, это реальный
+// курируемый контент, оставлен/восстановлен.
 //
 // Запуск: pnpm --filter @kamsnab/cms content:seed
-import { createDirectus, rest, staticToken, createItem, readItems } from "@directus/sdk";
+import { createDirectus, rest, staticToken, createItem, readItems, updateItem, uploadFiles } from "@directus/sdk";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const imagesDir = path.join(__dirname, "source-images");
 
 const url = process.env.PUBLIC_URL ?? "http://localhost:8055";
 const email = process.env.ADMIN_EMAIL;
@@ -31,6 +41,67 @@ async function login() {
 async function main() {
   const token = await login();
   const authed = client.with(staticToken(token));
+
+  const fileCache = new Map();
+  async function uploadImage(filename, title) {
+    if (fileCache.has(filename)) return fileCache.get(filename);
+    const buffer = await readFile(path.join(imagesDir, filename));
+    const form = new FormData();
+    form.append("title", title);
+    form.append("file", new Blob([buffer]), filename);
+    const file = await authed.request(uploadFiles(form));
+    fileCache.set(filename, file.id);
+    console.log(`+ file "${filename}" -> ${file.id}`);
+    return file.id;
+  }
+
+  const existingCategories = await authed.request(readItems("categories", { limit: -1 }));
+  let attachmentsCategory = existingCategories.find((c) => c.slug === "attachments");
+
+  const attachmentProducts = [
+    { title: "Захват для рулонов", slug: "zahvat-dlya-rulonov", image: "roll-grab.jpg" },
+    { title: "Захват для бумажных рулонов", slug: "zahvat-dlya-bumazhnyh-rulonov", image: "paper-roll-gripper.jpg" },
+    { title: "Захват для бочек", slug: "zahvat-dlya-bochek", image: "barrel-grab.jpg" },
+    { title: "Захват для тюков", slug: "zahvat-dlya-tyukov", image: "bale-grab.jpg" },
+    { title: "Захват для картона и коробок", slug: "zahvat-dlya-kartona-i-korobok", image: "cardboard-box-gripper.jpg" },
+    { title: "Мультипалетные вилы", slug: "multipaletnye-vily", image: "multi-pallet-forks.jpg" },
+    { title: "Ротатор", slug: "rotator", image: "rotator.jpg" },
+    { title: "Кран-балка", slug: "kran-balka", image: "overhead-crane.jpg" },
+    { title: "Ковши", slug: "kovshi", image: "buckets.jpg" },
+    { title: "Отвалы", slug: "otvaly", image: "dumps.jpg" },
+    { title: "Удлинитель вил", slug: "udlinitel-vil", image: "fork-extension.jpg" },
+    { title: "Монтажная платформа", slug: "montazhnaya-platforma", image: "mounting-platform.jpg" }
+  ];
+
+  if (!attachmentsCategory) {
+    const imageId = await uploadImage("multi-pallet-forks.jpg", "Навесное оборудование");
+    attachmentsCategory = await authed.request(
+      createItem("categories", { name: "Навесное оборудование", slug: "attachments", image: imageId })
+    );
+    console.log('+ category "Навесное оборудование"');
+  }
+
+  const existingAttachmentProducts = await authed.request(
+    readItems("products", { filter: { category: { _eq: attachmentsCategory.id } }, limit: -1 })
+  );
+  const existingAttachmentSlugs = new Set(existingAttachmentProducts.map((p) => p.slug));
+
+  for (const def of attachmentProducts) {
+    if (existingAttachmentSlugs.has(def.slug)) continue;
+    const imageId = await uploadImage(def.image, def.title);
+    await authed.request(
+      createItem("products", {
+        title: def.title,
+        slug: def.slug,
+        category: attachmentsCategory.id,
+        price: null,
+        price_note: "По запросу",
+        image: imageId,
+        status: "published"
+      })
+    );
+    console.log(`+ product "${def.title}"`);
+  }
 
   const existingPages = await authed.request(readItems("pages", { limit: -1 }));
   const pageDefs = [
@@ -151,6 +222,79 @@ async function main() {
         "<li>Инженеры знакомы с моделями техники, которую продаём и обслуживаем</li>" +
         "<li>Мобильная бригада полностью укомплектована инструментом и запчастями</li>" +
         "<li>Прозрачное ценообразование — стоимость согласовывается перед началом работ</li>" +
+        "</ul>"
+    },
+    {
+      slug: "privacy",
+      title: "Политика конфиденциальности",
+      content:
+        "<h2>Общие положения</h2>" +
+        "<p>Настоящая политика ООО «КАМСНАБ» в отношении обработки персональных данных (далее — «Политика») " +
+        "действует в отношении всей информации, которую ООО «КАМСНАБ» (далее — «Оператор») может получить о " +
+        "пользователе во время использования сайта, программ и продуктов Оператора.</p>" +
+        "<p>Персональные данные — это:</p>" +
+        "<ul>" +
+        "<li>данные, которые пользователь предоставляет о себе самостоятельно при заполнении форм на сайте " +
+        "(в том числе форм заявки на консультацию, обратный звонок или выезд специалиста);</li>" +
+        "<li>данные, которые автоматически передаются в процессе использования сайта с помощью установленного на " +
+        "устройстве пользователя программного обеспечения, в том числе IP-адрес, данные файлов cookie, информация " +
+        "о браузере, технических характеристиках оборудования и времени доступа;</li>" +
+        "<li>иные сведения, необходимые для оказания услуг и обработки заявок пользователей.</li>" +
+        "</ul>" +
+        "<p>Настоящая Политика применяется только к сайту Оператора и не контролирует и не несёт ответственности " +
+        "за сайты третьих лиц, на которые пользователь может перейти по ссылкам, доступным на сайте.</p>" +
+        "<h2>Цели обработки персональных данных</h2>" +
+        "<p>Оператор собирает и хранит только те персональные данные, которые необходимы для обработки заявок и " +
+        "оказания услуг пользователю, в следующих целях:</p>" +
+        "<ul>" +
+        "<li>идентификация стороны в рамках обработки заявок и договоров с Оператором;</li>" +
+        "<li>обратная связь с пользователем, включая направление уведомлений, запросов и информации, связанных с " +
+        "оказанием услуг, а также обработку запросов и заявок;</li>" +
+        "<li>подтверждение достоверности и полноты персональных данных, предоставленных пользователем;</li>" +
+        "<li>предоставление пользователю эффективной клиентской и технической поддержки при возникновении " +
+        "проблем.</li>" +
+        "</ul>" +
+        "<h2>Условия обработки персональных данных и передачи третьим лицам</h2>" +
+        "<p>Оператор хранит персональные данные пользователей в соответствии с внутренними регламентами конкретных " +
+        "сервисов и обрабатывает их с использованием средств автоматизации либо без таковых.</p>" +
+        "<p>Персональные данные пользователя не передаются третьим лицам, кроме случаев, прямо предусмотренных " +
+        "настоящей Политикой. Передача персональных данных пользователя третьим лицам возможна только:</p>" +
+        "<ul>" +
+        "<li>если пользователь выразил своё согласие на такие действия;</li>" +
+        "<li>если передача предусмотрена законодательством Российской Федерации в рамках установленной законом " +
+        "процедуры.</li>" +
+        "</ul>" +
+        "<h2>Права и обязанности сторон</h2>" +
+        "<p>Пользователь обязан:</p>" +
+        "<ul>" +
+        "<li>предоставлять достоверную информацию о персональных данных, необходимую для использования сайта и " +
+        "получения услуг;</li>" +
+        "<li>обновлять и дополнять предоставленную информацию о персональных данных в случае изменения таких " +
+        "данных.</li>" +
+        "</ul>" +
+        "<p>Оператор обязан:</p>" +
+        "<ul>" +
+        "<li>использовать полученную информацию исключительно для целей, указанных в настоящей Политике;</li>" +
+        "<li>обеспечить хранение конфиденциальной информации в тайне, не разглашать без предварительного " +
+        "письменного разрешения пользователя;</li>" +
+        "<li>принимать меры предосторожности для защиты конфиденциальности персональных данных пользователя.</li>" +
+        "</ul>" +
+        "<h2>Меры по защите персональных данных</h2>" +
+        "<p>Оператор принимает необходимые организационные и технические меры для защиты персональных данных " +
+        "пользователя от неправомерного или случайного доступа, уничтожения, изменения, блокирования, " +
+        "копирования, распространения, а также от иных неправомерных действий третьих лиц.</p>" +
+        "<h2>Заключительные положения</h2>" +
+        "<p>Оператор вправе вносить изменения в настоящую Политику без согласия пользователя. Новая редакция " +
+        "Политики вступает в силу с момента её размещения на сайте, если иное не предусмотрено новой редакцией.</p>" +
+        "<p>К настоящей Политике и отношениям между пользователем и Оператором, возникающим в связи с применением " +
+        "Политики, подлежит применению право Российской Федерации.</p>" +
+        "<h2>Контактная информация</h2>" +
+        "<p>По всем вопросам, связанным с обработкой персональных данных, вы можете обратиться к Оператору:</p>" +
+        "<ul>" +
+        "<li><strong>Наименование:</strong> ООО «КАМСНАБ»</li>" +
+        "<li><strong>Адрес:</strong> г. Чебоксары, ул. Вурнарское шоссе, д.11, офис 2</li>" +
+        "<li><strong>Телефон:</strong> +7 (927) 448-27-58</li>" +
+        "<li><strong>Email:</strong> kam-snab@mail.ru</li>" +
         "</ul>"
     }
   ];

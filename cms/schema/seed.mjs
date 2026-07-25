@@ -134,7 +134,14 @@ async function main() {
     { field: "title", type: "string", meta: { interface: "input" }, schema: { is_nullable: false } },
     { field: "slug", type: "string", meta: { interface: "input" }, schema: { is_nullable: false, is_unique: true } },
     { field: "category", type: "uuid", meta: { interface: "select-dropdown-m2o", special: ["m2o"] } },
-    { field: "price", type: "decimal", meta: { interface: "input" } },
+    {
+      field: "price",
+      type: "decimal",
+      meta: { interface: "input" },
+      // Директус по умолчанию делает decimal(10,5) — максимум 99999.99999,
+      // а у нас реальные цены доходят до нескольких миллионов рублей.
+      schema: { numeric_precision: 14, numeric_scale: 2 }
+    },
     { field: "price_note", type: "string", meta: { interface: "input" } },
     { field: "short_description", type: "text", meta: { interface: "input-multiline" } },
     { field: "description", type: "text", meta: { interface: "input-rich-text-html" } },
@@ -167,6 +174,22 @@ async function main() {
   }
 
   await ensureImageField("products", "image");
+  await ensureField("products", {
+    field: "sku",
+    type: "string",
+    meta: { interface: "input", note: "Артикул товара" },
+    schema: { is_unique: true }
+  });
+  await ensureField("products", {
+    field: "gallery",
+    type: "json",
+    meta: {
+      interface: "input-code",
+      special: ["cast-json"],
+      options: { language: "json" },
+      note: "Массив ID файлов для галереи (доп. фото товара)"
+    }
+  });
   await ensureDisplayTemplate("products", "{{title}} ({{sku}})");
 
   const attributesCreated = await ensureCollection("product_attributes", [
