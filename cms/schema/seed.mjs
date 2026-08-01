@@ -18,7 +18,8 @@ import {
   readFlows,
   createFlow,
   updateFlow,
-  createOperation
+  createOperation,
+  updateOperation
 } from "@directus/sdk";
 
 const url = process.env.PUBLIC_URL ?? "http://localhost:8055";
@@ -226,6 +227,7 @@ async function main() {
     { field: "phone", type: "string", meta: { interface: "input" }, schema: { is_nullable: false } },
     { field: "message", type: "text", meta: { interface: "input-multiline" } },
     { field: "product", type: "uuid", meta: { interface: "select-dropdown-m2o", special: ["m2o"] } },
+    { field: "page_url", type: "string", meta: { interface: "input" } },
     {
       field: "source",
       type: "string",
@@ -268,11 +270,21 @@ async function main() {
     );
   }
   await ensureDisplayTemplate("leads", "{{name}} — {{phone}}");
+  // На случай если коллекция "leads" уже была создана раньше без этого поля.
+  await ensureField("leads", { field: "page_url", type: "string", meta: { interface: "input" } });
 
   // --- Уведомление менеджеру на почту при новой заявке ---
   // Само письмо не уйдёт, пока в .env не заполнены EMAIL_TRANSPORT/EMAIL_SMTP_*
   // (см. .env.example) — Directus по умолчанию использует sendmail, которого
   // здесь нет.
+  const leadEmailBody =
+    "<p>Имя: {{$trigger.payload.name}}</p>" +
+    "<p>Телефон: {{$trigger.payload.phone}}</p>" +
+    "<p>Комментарий: {{$trigger.payload.message}}</p>" +
+    "<p>Источник: {{$trigger.payload.source}}</p>" +
+    "<p>Товар (ID): {{$trigger.payload.product}}</p>" +
+    '<p>Страница: <a href="{{$trigger.payload.page_url}}">{{$trigger.payload.page_url}}</a></p>';
+
   const existingFlows = await authed.request(readFlows());
   let leadEmailFlow = existingFlows.find((f) => f.name === "Заявка создана — письмо менеджеру");
 
@@ -304,12 +316,7 @@ async function main() {
           to: ["kam-snab@mail.ru"],
           subject: "Новая заявка с сайта КАМСНАБ",
           type: "wysiwyg",
-          body:
-            "<p>Имя: {{$trigger.payload.name}}</p>" +
-            "<p>Телефон: {{$trigger.payload.phone}}</p>" +
-            "<p>Комментарий: {{$trigger.payload.message}}</p>" +
-            "<p>Источник: {{$trigger.payload.source}}</p>" +
-            "<p>Товар (ID): {{$trigger.payload.product}}</p>"
+          body: leadEmailBody
         }
       })
     );
@@ -317,7 +324,18 @@ async function main() {
     await authed.request(updateFlow(leadEmailFlow.id, { operation: operation.id }));
     console.log('+ flow "Заявка создана — письмо менеджеру" создан');
   } else {
-    console.log('- flow "Заявка создана — письмо менеджеру" уже существует, пропускаю');
+    const operationId = leadEmailFlow.operation;
+    await authed.request(
+      updateOperation(operationId, {
+        options: {
+          to: ["kam-snab@mail.ru"],
+          subject: "Новая заявка с сайта КАМСНАБ",
+          type: "wysiwyg",
+          body: leadEmailBody
+        }
+      })
+    );
+    console.log('- flow "Заявка создана — письмо менеджеру" уже существует, обновил текст письма');
   }
 
   await ensureCollection(

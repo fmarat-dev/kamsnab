@@ -47,6 +47,7 @@ export interface Lead {
   phone: string;
   message?: string | null;
   product?: string | null;
+  page_url?: string | null;
   source: LeadSource;
   status?: "new" | "processed";
   date_created?: string;

@@ -8,6 +8,7 @@ export function ProductLeadForm({ productId, productTitle }: { productId: string
     await kamsnab.createLead({
       ...values,
       product: productId,
+      page_url: window.location.href,
       source: "site"
     });
   }
