@@ -23,5 +23,9 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd infra
-            docker compose up -d --build
+            # --no-cache: без него Docker переиспользует старый слой сборки
+            # Next.js, если файлы кода не менялись, и сайт не подхватывает
+            # правки, сделанные только в Directus (без пуша кода).
+            docker compose build --no-cache site miniapp-telegram miniapp-max
+            docker compose up -d
             docker image prune -f
