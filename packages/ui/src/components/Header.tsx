@@ -24,7 +24,7 @@ export function Header({
   const ctaClassName = "rounded-card bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600";
 
   return (
-    <header className="sticky top-0 z-10 [transform:translateZ(0)] will-change-transform border-b border-ink-100 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-20 [transform:translateZ(0)] will-change-transform border-b border-ink-100 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-6xl border-b border-ink-100 px-4 py-2">
         <nav className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-base font-medium text-ink-600">
           {navLinks.map((link) => (
@@ -58,6 +58,26 @@ export function Header({
           />
         </form>
         <div className="flex items-center gap-4">
+          <a
+            href={`tel:${phone.replace(/[^+\d]/g, "")}`}
+            title={phone}
+            aria-label={phone}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 text-ink-700 hover:border-brand-400 hover:text-brand-600 sm:hidden"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
+            </svg>
+          </a>
           <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="hidden text-sm font-semibold text-ink-800 sm:block">
             {phone}
           </a>
