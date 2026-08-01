@@ -62,8 +62,9 @@ export function Header({
             href={`tel:${phone.replace(/[^+\d]/g, "")}`}
             title={phone}
             aria-label={phone}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 text-ink-700 hover:border-brand-400 hover:text-brand-600 sm:hidden"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full border border-green-500 bg-green-50 text-green-600 sm:hidden"
           >
+            <span className="absolute inset-0 animate-ping rounded-full bg-green-400 opacity-75" />
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -74,6 +75,7 @@ export function Header({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="relative"
             >
               <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
             </svg>
