@@ -15,6 +15,7 @@ import {
   createPolicy,
   createPermission,
   readPermissions,
+  updatePermission,
   readFlows,
   createFlow,
   updateFlow,
@@ -417,19 +418,23 @@ async function main() {
     );
   }
 
-  const leadCreateExists = existingPermissions.some(
+  const leadCreateFields = ["name", "phone", "message", "product", "page_url", "source"];
+  const leadCreatePermission = existingPermissions.find(
     (p) => p.collection === "leads" && p.action === "create" && p.policy === publicPolicy.id
   );
-  if (!leadCreateExists) {
+  if (!leadCreatePermission) {
     await authed.request(
       createPermission({
         policy: publicPolicy.id,
         collection: "leads",
         action: "create",
-        fields: ["name", "phone", "message", "product", "source"],
+        fields: leadCreateFields,
         permissions: {}
       })
     );
+  } else if (!leadCreateFields.every((f) => leadCreatePermission.fields?.includes(f))) {
+    await authed.request(updatePermission(leadCreatePermission.id, { fields: leadCreateFields }));
+    console.log("- permission leads.create уже существует, обновил список полей");
   }
 
   console.log("Готово.");
