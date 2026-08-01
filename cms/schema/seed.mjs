@@ -326,6 +326,7 @@ async function main() {
       idField,
       { field: "company_name", type: "string", meta: { interface: "input" } },
       { field: "phone", type: "string", meta: { interface: "input" } },
+      { field: "phone_landline", type: "string", meta: { interface: "input" } },
       { field: "whatsapp", type: "string", meta: { interface: "input" } },
       { field: "email", type: "string", meta: { interface: "input" } },
       { field: "address", type: "string", meta: { interface: "input" } },
@@ -335,6 +336,8 @@ async function main() {
     ],
     { singleton: true, icon: "settings" }
   );
+  // На случай если коллекция "settings" уже была создана раньше без этого поля.
+  await ensureField("settings", { field: "phone_landline", type: "string", meta: { interface: "input" } });
 
   // --- Публичный доступ: read-only каталог/страницы/настройки, insert-only заявки ---
   const policies = await authed.request(readPolicies());
