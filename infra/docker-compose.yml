@@ -32,7 +32,7 @@ services:
     image: directus/directus:11
     restart: unless-stopped
     # Порт наружу не публикуется — снаружи Directus доступен только через
-    # caddy (cms.kamsnab.ru), см. Caddyfile.
+    # caddy (cms.kam-snab.ru), см. Caddyfile.
     depends_on:
       postgres:
         condition: service_healthy

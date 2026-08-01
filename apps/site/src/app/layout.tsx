@@ -79,7 +79,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           address={settings?.address ?? "г. Чебоксары"}
           phone={settings?.phone ?? "+7 (___) ___-__-__"}
           phoneLandline={settings?.phone_landline ?? undefined}
-          email={settings?.email ?? "info@kamsnab.ru"}
+          email={settings?.email ?? "info@kam-snab.ru"}
           workHours={settings?.work_hours ?? undefined}
         />
       </body>

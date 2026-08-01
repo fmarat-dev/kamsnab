@@ -27,8 +27,8 @@ export default async function ContactsPage() {
               {settings.phone_landline}
             </a>
           )}
-          <a href={`mailto:${settings?.email ?? "info@kamsnab.ru"}`} className="text-ink-600">
-            {settings?.email ?? "info@kamsnab.ru"}
+          <a href={`mailto:${settings?.email ?? "info@kam-snab.ru"}`} className="text-ink-600">
+            {settings?.email ?? "info@kam-snab.ru"}
           </a>
           {settings?.work_hours && <p className="text-ink-400">{settings.work_hours}</p>}
         </div>

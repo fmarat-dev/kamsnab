@@ -1,15 +1,15 @@
-kamsnab.ru {
+kam-snab.ru {
 	reverse_proxy site:3000
 }
 
-tg.kamsnab.ru {
+tg.kam-snab.ru {
 	reverse_proxy miniapp-telegram:80
 }
 
-max.kamsnab.ru {
+max.kam-snab.ru {
 	reverse_proxy miniapp-max:80
 }
 
-cms.kamsnab.ru {
+cms.kam-snab.ru {
 	reverse_proxy directus:8055
 }
