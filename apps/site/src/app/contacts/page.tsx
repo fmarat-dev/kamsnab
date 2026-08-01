@@ -23,10 +23,10 @@ export default async function ContactsPage() {
             {settings?.phone ?? "+7 (953) 448-37-58"}
           </a>
           <a
-            href={`tel:${(settings?.phone_landline ?? "+7 (8352) 282-283").replace(/[^+\d]/g, "")}`}
+            href={`tel:${(settings?.phone_landline ?? "+7 (8352) 285-283").replace(/[^+\d]/g, "")}`}
             className="font-semibold text-brand-600"
           >
-            {settings?.phone_landline ?? "+7 (8352) 282-283"}
+            {settings?.phone_landline ?? "+7 (8352) 285-283"}
           </a>
           <a href={`mailto:${settings?.email ?? "kam-snab@mail.ru"}`} className="text-ink-600">
             {settings?.email ?? "kam-snab@mail.ru"}
