@@ -24,7 +24,7 @@ export function Header({
   const ctaClassName = "rounded-card bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600";
 
   return (
-    <header className="sticky top-0 z-10 border-b border-ink-100 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-10 [transform:translateZ(0)] will-change-transform border-b border-ink-100 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-6xl border-b border-ink-100 px-4 py-2">
         <nav className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-base font-medium text-ink-600">
           {navLinks.map((link) => (
