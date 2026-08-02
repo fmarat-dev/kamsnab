@@ -13,7 +13,7 @@
     "@kamsnab/api-client": "workspace:*",
     "@kamsnab/ui": "workspace:*",
     "lucide-react": "^1.24.0",
-    "next": "^15.0.0",
+    "next": "^15.5.22",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },
