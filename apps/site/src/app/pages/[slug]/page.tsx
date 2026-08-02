@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { sanitizeRichText } from "@/lib/sanitize";
 import { Container, Breadcrumbs } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
 import { ServiceLeadForm } from "./ServiceLeadForm";
@@ -34,7 +35,7 @@ export default async function InfoPage({ params }: { params: Promise<{ slug: str
       <Breadcrumbs items={[{ label: page.title }]} />
       <h1 className="mb-6 text-3xl font-bold text-ink-800">{page.title}</h1>
       {pageHighlights[slug] && <PageHighlights items={pageHighlights[slug]} />}
-      <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: page.content }} />
+      <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeRichText(page.content) }} />
       {(slug === "service" || slug === "repair") && (
         <div id="request" className="mt-10 rounded-card border border-ink-100 p-6">
           <h2 className="mb-1 text-xl font-bold text-ink-800">Нужна консультация или выезд специалистов?</h2>

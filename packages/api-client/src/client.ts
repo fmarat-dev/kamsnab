@@ -83,13 +83,24 @@ export function createKamsnabClient(url: string) {
     },
 
     async createLead(lead: Lead): Promise<void> {
+      // Поля из публичной формы попадают в HTML-письмо менеджеру без
+      // экранирования (шаблон Directus Flow) — вырезаем теги здесь, чтобы
+      // посетитель не мог вставить разметку/скрипты в письмо.
+      const stripTags = (value: string) => value.replace(/<[^>]*>/g, "");
+      const sanitized: Lead = {
+        ...lead,
+        name: stripTags(lead.name),
+        message: lead.message ? stripTags(lead.message) : lead.message,
+        page_url: lead.page_url && /^https?:\/\//.test(lead.page_url) ? stripTags(lead.page_url) : null
+      };
+
       // Публичная роль имеет только create на leads, без read — Directus
       // отвечает 204 без тела. SDK's createItem() пытается распарсить тело
       // как JSON и падает на пустом ответе, поэтому здесь сырой fetch.
       const res = await fetch(`${url}/items/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(lead)
+        body: JSON.stringify(sanitized)
       });
       if (!res.ok) {
         throw new Error(`Failed to create lead: ${res.status}`);

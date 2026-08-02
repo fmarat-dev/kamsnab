@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { sanitizeRichText } from "@/lib/sanitize";
 import { assetUrl, getProductBadge, type ProductAttribute } from "@kamsnab/api-client";
 import { Container, Breadcrumbs, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
-import { siteUrl } from "@/lib/site";
+import { siteUrl, safeJsonLd } from "@/lib/site";
 import { ProductLeadForm } from "./ProductLeadForm";
 import { ProductGallery } from "./ProductGallery";
 import { ProductActions } from "./ProductActions";
@@ -87,7 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }}
       />
       <Breadcrumbs
         items={[
@@ -102,7 +103,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <h1 className="text-3xl font-bold text-ink-800">{product.title}</h1>
           {product.short_description && <p className="text-ink-500">{product.short_description}</p>}
           {product.description && (
-            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />
+            <div
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }}
+            />
           )}
 
           {attributeGroups.length > 0 && (

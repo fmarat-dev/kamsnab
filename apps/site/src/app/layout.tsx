@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Heart, GitCompare } from "lucide-react";
 import { Footer } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
-import { siteUrl, siteName } from "@/lib/site";
+import { siteUrl, siteName, safeJsonLd } from "@/lib/site";
 import { SiteHeader } from "./SiteHeader";
 import "./globals.css";
 
@@ -65,7 +65,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(organizationJsonLd) }}
         />
         <SiteHeader
           logo={<span className="text-xl font-extrabold text-brand-600">КАМСНАБ</span>}
