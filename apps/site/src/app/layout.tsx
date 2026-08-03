@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 import { Heart, GitCompare } from "lucide-react";
 import { Footer } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
   },
   description: defaultDescription,
   robots: { index: true, follow: true },
+  verification: { yandex: "e5999b584a43210a" },
   openGraph: {
     type: "website",
     locale: "ru_RU",
@@ -67,6 +69,23 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: safeJsonLd(organizationJsonLd) }}
         />
+        <Script id="yandex-metrika" strategy="beforeInteractive">
+          {`
+            (function(m,e,t,r,i,k,a){
+                m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+                m[i].l=1*new Date();
+                for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+                k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+            })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=111277837', 'ym');
+
+            ym(111277837, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+          `}
+        </Script>
+        <noscript>
+          <div>
+            <img src="https://mc.yandex.ru/watch/111277837" style={{ position: "absolute", left: "-9999px" }} alt="" />
+          </div>
+        </noscript>
         <SiteHeader
           logo={<span className="text-xl font-extrabold text-brand-600">КАМСНАБ</span>}
           phone={settings?.phone ?? "+7 (953) 448-37-58"}
