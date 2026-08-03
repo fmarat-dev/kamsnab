@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { kamsnab } from "@/lib/directus";
 import { CatalogClient } from "./CatalogClient";
 
+type CatalogSearchParams = Promise<{ category?: string; search?: string }>;
+
 export async function generateMetadata({
   searchParams
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: CatalogSearchParams;
 }): Promise<Metadata> {
   const { category: categorySlug } = await searchParams;
 
@@ -29,6 +31,20 @@ export async function generateMetadata({
   };
 }
 
-export default function CatalogPage() {
-  return <CatalogClient />;
+export default async function CatalogPage({ searchParams }: { searchParams: CatalogSearchParams }) {
+  const { category: categorySlug, search } = await searchParams;
+
+  const [categories, products] = await Promise.all([
+    kamsnab.getCategories().catch(() => []),
+    kamsnab.getProducts({ categorySlug, search }).catch(() => [])
+  ]);
+
+  return (
+    <CatalogClient
+      initialCategories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
+      initialProducts={products}
+      initialCategorySlug={categorySlug ?? null}
+      initialSearchTerm={search ?? ""}
+    />
+  );
 }

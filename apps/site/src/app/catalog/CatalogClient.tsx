@@ -1,27 +1,37 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Container, Breadcrumbs, CategoryFilters, ProductCard, type CategoryOption } from "@kamsnab/ui";
 import { assetUrl, getProductBadge, type Product } from "@kamsnab/api-client";
 import { kamsnab, directusUrl } from "@/lib/directus";
 
-function CatalogContent() {
-  const searchParams = useSearchParams();
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [activeSlug, setActiveSlug] = useState<string | null>(searchParams.get("category"));
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
-  const [loading, setLoading] = useState(true);
+interface CatalogContentProps {
+  initialCategories: CategoryOption[];
+  initialProducts: Product[];
+  initialCategorySlug: string | null;
+  initialSearchTerm: string;
+}
+
+function CatalogContent({
+  initialCategories,
+  initialProducts,
+  initialCategorySlug,
+  initialSearchTerm
+}: CatalogContentProps) {
+  const [categories] = useState<CategoryOption[]>(initialCategories);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [activeSlug, setActiveSlug] = useState<string | null>(initialCategorySlug);
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [loading, setLoading] = useState(false);
+  // Первый рендер уже пришёл с сервера с данными под текущий URL —
+  // перезапрашивать сразу же не нужно, только при следующих изменениях.
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    kamsnab
-      .getCategories()
-      .then((items) => setCategories(items.map((c) => ({ slug: c.slug, name: c.name }))))
-      .catch(() => setCategories([]));
-  }, []);
-
-  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setLoading(true);
     const timeout = setTimeout(() => {
       kamsnab
@@ -77,10 +87,6 @@ function CatalogContent() {
   );
 }
 
-export function CatalogClient() {
-  return (
-    <Suspense fallback={null}>
-      <CatalogContent />
-    </Suspense>
-  );
+export function CatalogClient(props: CatalogContentProps) {
+  return <CatalogContent {...props} />;
 }
