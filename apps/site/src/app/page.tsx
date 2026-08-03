@@ -104,7 +104,7 @@ export default async function HomePage() {
             {categories.map((category) => (
               <Link
                 key={category.slug}
-                href={`/catalog?category=${category.slug}`}
+                href={`/catalog/category/${category.slug}`}
                 className="group flex flex-col overflow-hidden rounded-card border border-ink-100 bg-white transition-shadow hover:shadow-lg"
               >
                 <div className="aspect-square w-full overflow-hidden bg-ink-50 p-6">
@@ -132,7 +132,7 @@ export default async function HomePage() {
         <Container className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-ink-800">Популярные модели</h2>
-            <Link href="/catalog?category=vilochnye-pogruzchiki" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+            <Link href="/catalog/category/vilochnye-pogruzchiki" className="text-sm font-medium text-brand-600 hover:text-brand-700">
               Все погрузчики →
             </Link>
           </div>

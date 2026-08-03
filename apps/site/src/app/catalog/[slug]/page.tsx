@@ -93,7 +93,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <Breadcrumbs
         items={[
           { label: "Каталог", href: "/catalog" },
-          ...(category ? [{ label: category.name, href: `/catalog?category=${category.slug}` }] : []),
+          ...(category ? [{ label: category.name, href: `/catalog/category/${category.slug}` }] : []),
           { label: product.title }
         ]}
       />

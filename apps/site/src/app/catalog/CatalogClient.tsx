@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Container, Breadcrumbs, CategoryFilters, ProductCard, type CategoryOption } from "@kamsnab/ui";
 import { assetUrl, getProductBadge, type Product } from "@kamsnab/api-client";
 import { kamsnab, directusUrl } from "@/lib/directus";
@@ -8,19 +9,16 @@ import { kamsnab, directusUrl } from "@/lib/directus";
 interface CatalogContentProps {
   initialCategories: CategoryOption[];
   initialProducts: Product[];
-  initialCategorySlug: string | null;
+  // Категория теперь часть URL (/catalog/category/[slug]) — переключение
+  // категории всегда полноценная навигация, а не смена локального состояния.
+  categorySlug: string | null;
   initialSearchTerm: string;
 }
 
-function CatalogContent({
-  initialCategories,
-  initialProducts,
-  initialCategorySlug,
-  initialSearchTerm
-}: CatalogContentProps) {
+function CatalogContent({ initialCategories, initialProducts, categorySlug, initialSearchTerm }: CatalogContentProps) {
+  const router = useRouter();
   const [categories] = useState<CategoryOption[]>(initialCategories);
   const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [activeSlug, setActiveSlug] = useState<string | null>(initialCategorySlug);
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [loading, setLoading] = useState(false);
   // Первый рендер уже пришёл с сервера с данными под текущий URL —
@@ -35,18 +33,30 @@ function CatalogContent({
     setLoading(true);
     const timeout = setTimeout(() => {
       kamsnab
-        .getProducts({ categorySlug: activeSlug ?? undefined, search: searchTerm.trim() || undefined })
+        .getProducts({ categorySlug: categorySlug ?? undefined, search: searchTerm.trim() || undefined })
         .then(setProducts)
         .catch(() => setProducts([]))
         .finally(() => setLoading(false));
     }, 300);
     return () => clearTimeout(timeout);
-  }, [activeSlug, searchTerm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
+  const activeCategory = categories.find((c) => c.slug === categorySlug);
+
+  function handleSelectCategory(slug: string | null) {
+    router.push(slug ? `/catalog/category/${slug}` : "/catalog");
+  }
 
   return (
     <Container className="flex flex-col gap-6 py-10">
-      <Breadcrumbs items={[{ label: "Каталог" }]} />
-      <h1 className="text-2xl font-bold text-ink-800">Каталог</h1>
+      <Breadcrumbs
+        items={[
+          ...(activeCategory ? [{ label: "Каталог", href: "/catalog" }] : []),
+          { label: activeCategory?.name ?? "Каталог" }
+        ]}
+      />
+      <h1 className="text-2xl font-bold text-ink-800">{activeCategory?.name ?? "Каталог"}</h1>
       <input
         type="search"
         value={searchTerm}
@@ -54,7 +64,7 @@ function CatalogContent({
         placeholder="Поиск по каталогу"
         className="w-full max-w-sm rounded-card border border-ink-200 px-4 py-2 text-sm outline-none focus:border-brand-500"
       />
-      <CategoryFilters categories={categories} activeSlug={activeSlug} onSelect={setActiveSlug} />
+      <CategoryFilters categories={categories} activeSlug={categorySlug} onSelect={handleSelectCategory} />
       {loading ? (
         <p className="text-ink-400">Загрузка...</p>
       ) : (

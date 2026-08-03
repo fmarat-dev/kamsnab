@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const categoryEntries = categories.map((category) => ({
-    url: `${siteUrl}/catalog?category=${category.slug}`,
+    url: `${siteUrl}/catalog/category/${category.slug}`,
     changeFrequency: "weekly" as const,
     priority: 0.6
   }));

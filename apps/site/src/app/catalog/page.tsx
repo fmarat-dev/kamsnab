@@ -1,29 +1,11 @@
 import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 import { kamsnab } from "@/lib/directus";
 import { CatalogClient } from "./CatalogClient";
 
 type CatalogSearchParams = Promise<{ category?: string; search?: string }>;
 
-export async function generateMetadata({
-  searchParams
-}: {
-  searchParams: CatalogSearchParams;
-}): Promise<Metadata> {
-  const { category: categorySlug } = await searchParams;
-
-  if (categorySlug) {
-    const categories = await kamsnab.getCategories().catch(() => []);
-    const category = categories.find((c) => c.slug === categorySlug);
-    if (category) {
-      const description = `${category.name} — купить в КАМСНАБ. Продажа и обслуживание складской техники, доставка по всей России.`;
-      return {
-        title: category.name,
-        description,
-        alternates: { canonical: `/catalog?category=${category.slug}` }
-      };
-    }
-  }
-
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Каталог складской техники",
     description: "Весь каталог складской техники КАМСНАБ: вилочные погрузчики, штабелёры, тележки и другое оборудование.",
@@ -34,16 +16,22 @@ export async function generateMetadata({
 export default async function CatalogPage({ searchParams }: { searchParams: CatalogSearchParams }) {
   const { category: categorySlug, search } = await searchParams;
 
+  // Старый адрес категории (?category=slug) — теперь у категорий свой путь,
+  // редиректим постоянно, чтобы не потерять уже проиндексированные ссылки.
+  if (categorySlug) {
+    permanentRedirect(`/catalog/category/${categorySlug}`);
+  }
+
   const [categories, products] = await Promise.all([
     kamsnab.getCategories().catch(() => []),
-    kamsnab.getProducts({ categorySlug, search }).catch(() => [])
+    kamsnab.getProducts({ search }).catch(() => [])
   ]);
 
   return (
     <CatalogClient
       initialCategories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
       initialProducts={products}
-      initialCategorySlug={categorySlug ?? null}
+      categorySlug={null}
       initialSearchTerm={search ?? ""}
     />
   );
