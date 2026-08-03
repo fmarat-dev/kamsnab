@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useCompareSlugs, toggleCompareSlug } from "../lib/compare";
 import { useFavoriteSlugs, toggleFavoriteSlug } from "../lib/favorites";
 
@@ -20,6 +21,11 @@ export interface ProductCardProps {
   onSelect?: (slug: string) => void;
   showCompare?: boolean;
   showFavorite?: boolean;
+  // Готовый элемент картинки. По умолчанию обычный <img> (нужно в мини-аппах
+  // на Vite). На сайте (Next.js) сюда передают <ProductCardImage /> (next/image) —
+  // именно элементом, не функцией: функции нельзя передавать из серверных
+  // компонентов в клиентские через границу RSC.
+  image?: ReactNode;
 }
 
 function formatPrice(price?: number | null, priceNote?: string) {
@@ -28,7 +34,7 @@ function formatPrice(price?: number | null, priceNote?: string) {
   return priceNote ? `${priceNote} ${formatted} ₽` : `${formatted} ₽`;
 }
 
-export function ProductCard({ product, href, onSelect, showCompare, showFavorite }: ProductCardProps) {
+export function ProductCard({ product, href, onSelect, showCompare, showFavorite, image }: ProductCardProps) {
   const compareSlugs = useCompareSlugs();
   const favoriteSlugs = useFavoriteSlugs();
   const isCompared = showCompare ? compareSlugs.includes(product.slug) : false;
@@ -121,12 +127,16 @@ export function ProductCard({ product, href, onSelect, showCompare, showFavorite
           </div>
         )}
         {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="h-full w-full object-contain transition-transform group-hover:scale-105"
-            loading="lazy"
-          />
+          image ? (
+            image
+          ) : (
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              className="h-full w-full object-contain transition-transform group-hover:scale-105"
+              loading="lazy"
+            />
+          )
         ) : (
           <div className="flex h-full w-full items-center justify-center text-ink-300">Нет фото</div>
         )}

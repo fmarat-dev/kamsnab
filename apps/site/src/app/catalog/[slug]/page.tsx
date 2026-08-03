@@ -5,6 +5,7 @@ import { sanitizeRichText } from "@/lib/sanitize";
 import { assetUrl, getProductBadge, type ProductAttribute } from "@kamsnab/api-client";
 import { Container, Breadcrumbs, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
+import { ProductCardImage } from "@/components/ProductCardImage";
 import { siteUrl, safeJsonLd } from "@/lib/site";
 import { ProductLeadForm } from "./ProductLeadForm";
 import { ProductGallery } from "./ProductGallery";
@@ -168,24 +169,36 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <div className="mt-16 flex flex-col gap-6">
           <h2 className="text-2xl font-bold text-ink-800">С этим товаром покупают</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {relatedProducts.map((item) => (
-              <ProductCard
-                key={item.slug}
-                href={`/catalog/${item.slug}`}
-                showCompare
-                showFavorite
-                product={{
-                  slug: item.slug,
-                  title: item.title,
-                  sku: item.sku,
-                  price: item.price,
-                  priceNote: item.price_note ?? undefined,
-                  imageUrl: assetUrl(directusUrl, item.image),
-                  categoryName: category?.name,
-                  badge: getProductBadge(item)
-                }}
-              />
-            ))}
+            {relatedProducts.map((item) => {
+              const imageUrl = assetUrl(directusUrl, item.image);
+              return (
+                <ProductCard
+                  key={item.slug}
+                  href={`/catalog/${item.slug}`}
+                  showCompare
+                  showFavorite
+                  image={
+                    imageUrl && (
+                      <ProductCardImage
+                        src={imageUrl}
+                        alt={item.title}
+                        className="object-contain transition-transform group-hover:scale-105"
+                      />
+                    )
+                  }
+                  product={{
+                    slug: item.slug,
+                    title: item.title,
+                    sku: item.sku,
+                    price: item.price,
+                    priceNote: item.price_note ?? undefined,
+                    imageUrl,
+                    categoryName: category?.name,
+                    badge: getProductBadge(item)
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Container, Breadcrumbs, CategoryFilters, ProductCard, type CategoryOption } from "@kamsnab/ui";
 import { assetUrl, getProductBadge, type Product } from "@kamsnab/api-client";
 import { kamsnab, directusUrl } from "@/lib/directus";
+import { ProductCardImage } from "@/components/ProductCardImage";
 
 interface CatalogContentProps {
   initialCategories: CategoryOption[];
@@ -69,25 +70,37 @@ function CatalogContent({ initialCategories, initialProducts, categorySlug, init
         <p className="text-ink-400">Загрузка...</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <ProductCard
-              key={product.slug}
-              href={`/catalog/${product.slug}`}
-              showCompare
-              showFavorite
-              product={{
-                slug: product.slug,
-                title: product.title,
-                sku: product.sku,
-                price: product.price,
-                priceNote: product.price_note ?? undefined,
-                imageUrl: assetUrl(directusUrl, product.image),
-                categoryName:
-                  typeof product.category === "object" && product.category ? product.category.name : undefined,
-                badge: getProductBadge(product)
-              }}
-            />
-          ))}
+          {products.map((product) => {
+            const imageUrl = assetUrl(directusUrl, product.image);
+            return (
+              <ProductCard
+                key={product.slug}
+                href={`/catalog/${product.slug}`}
+                showCompare
+                showFavorite
+                image={
+                  imageUrl && (
+                    <ProductCardImage
+                      src={imageUrl}
+                      alt={product.title}
+                      className="object-contain transition-transform group-hover:scale-105"
+                    />
+                  )
+                }
+                product={{
+                  slug: product.slug,
+                  title: product.title,
+                  sku: product.sku,
+                  price: product.price,
+                  priceNote: product.price_note ?? undefined,
+                  imageUrl,
+                  categoryName:
+                    typeof product.category === "object" && product.category ? product.category.name : undefined,
+                  badge: getProductBadge(product)
+                }}
+              />
+            );
+          })}
           {products.length === 0 && (
             <p className="text-ink-400">Ничего не найдено{searchTerm ? ` по запросу «${searchTerm}»` : ""}.</p>
           )}

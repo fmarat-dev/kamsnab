@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { PackageCheck, ShieldCheck, Truck } from "lucide-react";
 import { assetUrl, getProductBadge, type Product } from "@kamsnab/api-client";
 import { Container, Button, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
+import { ProductCardImage } from "@/components/ProductCardImage";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" }
@@ -107,13 +109,14 @@ export default async function HomePage() {
                 href={`/catalog/category/${category.slug}`}
                 className="group flex flex-col overflow-hidden rounded-card border border-ink-100 bg-white transition-shadow hover:shadow-lg"
               >
-                <div className="aspect-square w-full overflow-hidden bg-ink-50 p-6">
+                <div className="relative aspect-square w-full overflow-hidden bg-ink-50 p-6">
                   {category.image ? (
-                    <img
-                      src={assetUrl(directusUrl, category.image)}
+                    <Image
+                      src={assetUrl(directusUrl, category.image)!}
                       alt={category.name}
-                      className="h-full w-full object-contain transition-transform group-hover:scale-105"
-                      loading="lazy"
+                      fill
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                      className="object-contain transition-transform group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-ink-300">Нет фото</div>
@@ -137,15 +140,27 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {forklifts.map((product) => (
-              <ProductCard
-                key={product.slug}
-                href={`/catalog/${product.slug}`}
-                showCompare
-                showFavorite
-                product={toCardProps(product)}
-              />
-            ))}
+            {forklifts.map((product) => {
+              const imageUrl = assetUrl(directusUrl, product.image);
+              return (
+                <ProductCard
+                  key={product.slug}
+                  href={`/catalog/${product.slug}`}
+                  showCompare
+                  showFavorite
+                  image={
+                    imageUrl && (
+                      <ProductCardImage
+                        src={imageUrl}
+                        alt={product.title}
+                        className="object-contain transition-transform group-hover:scale-105"
+                      />
+                    )
+                  }
+                  product={toCardProps(product)}
+                />
+              );
+            })}
             {forklifts.length === 0 && (
               <p className="text-ink-400">Каталог пока пуст — наполните коллекцию products в Directus.</p>
             )}
@@ -163,15 +178,27 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {promo.map((product) => (
-                <ProductCard
-                  key={product.slug}
-                  href={`/catalog/${product.slug}`}
-                  showCompare
-                  showFavorite
-                  product={toCardProps(product, "Спецпредложение")}
-                />
-              ))}
+              {promo.map((product) => {
+                const imageUrl = assetUrl(directusUrl, product.image);
+                return (
+                  <ProductCard
+                    key={product.slug}
+                    href={`/catalog/${product.slug}`}
+                    showCompare
+                    showFavorite
+                    image={
+                      imageUrl && (
+                        <ProductCardImage
+                          src={imageUrl}
+                          alt={product.title}
+                          className="object-contain transition-transform group-hover:scale-105"
+                        />
+                      )
+                    }
+                    product={toCardProps(product, "Спецпредложение")}
+                  />
+                );
+              })}
             </div>
           </Container>
         </section>
