@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 
 export interface LeadFormValues {
   name: string;
   phone: string;
   message?: string;
+  // Технические поля антиспам-защиты (honeypot + время заполнения формы) —
+  // не показываются пользователю, но нужны серверу для проверки перед
+  // созданием заявки. См. apps/site/src/app/api/leads/route.ts.
+  website?: string;
+  renderedAt?: number;
 }
 
 export interface LeadFormProps {
@@ -20,6 +25,7 @@ const PHONE_LEADING_DIGITS = ["7", "8"];
 export function LeadForm({ productTitle, submitLabel = "Отправить заявку", onSubmit }: LeadFormProps) {
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error" | "invalid-phone">("idle");
   const [phone, setPhone] = useState("");
+  const renderedAt = useRef(Date.now());
 
   function handlePhoneChange(event: ChangeEvent<HTMLInputElement>) {
     const digits = event.target.value.replace(/\D/g, "").slice(0, PHONE_LENGTH);
@@ -44,7 +50,9 @@ export function LeadForm({ productTitle, submitLabel = "Отправить за�
     const values: LeadFormValues = {
       name: String(form.get("name") ?? ""),
       phone,
-      message: String(form.get("message") ?? "") || undefined
+      message: String(form.get("message") ?? "") || undefined,
+      website: String(form.get("website") ?? ""),
+      renderedAt: renderedAt.current
     };
     setStatus("submitting");
     try {
@@ -95,6 +103,15 @@ export function LeadForm({ productTitle, submitLabel = "Отправить за�
         placeholder="Комментарий (необязательно)"
         rows={3}
         className="rounded-card border border-ink-200 px-4 py-3 text-sm outline-none focus:border-brand-500"
+      />
+      {/* Honeypot: скрыто от людей, но обычные боты находят и заполняют это поле. */}
+      <input
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute h-0 w-0 overflow-hidden opacity-0"
+        style={{ left: "-9999px" }}
       />
       <button
         type="submit"

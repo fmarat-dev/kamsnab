@@ -1,11 +1,11 @@
 "use client";
 
 import { LeadForm, type LeadFormValues } from "@kamsnab/ui";
-import { kamsnab } from "@/lib/directus";
+import { submitLead } from "@/lib/leads";
 
 export function ServiceLeadForm() {
   async function handleSubmit(values: LeadFormValues) {
-    await kamsnab.createLead({ ...values, page_url: window.location.href, source: "site" });
+    await submitLead(values);
   }
 
   return <LeadForm submitLabel="Оставить заявку" onSubmit={handleSubmit} />;
