@@ -10,6 +10,7 @@ import { siteUrl, safeJsonLd } from "@/lib/site";
 import { ProductLeadForm } from "./ProductLeadForm";
 import { ProductGallery } from "./ProductGallery";
 import { ProductActions } from "./ProductActions";
+import { ProductTabs } from "./ProductTabs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -102,55 +103,88 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <div className="flex flex-col gap-4">
           <ProductGallery images={galleryImages} title={product.title} />
           <h1 className="text-3xl font-bold text-ink-800">{product.title}</h1>
-          {product.short_description && <p className="text-ink-500">{product.short_description}</p>}
-          {product.description && (
-            <div
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }}
-            />
-          )}
 
-          {attributeGroups.length > 0 && (
-            <div className="flex flex-col gap-6">
-              <h2 className="text-xl font-bold text-ink-800">Характеристики</h2>
-              {attributeGroups.map(([group, attrs]) => (
-                <div key={group}>
-                  <h3 className="mb-2 font-semibold text-ink-700">{group}</h3>
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {attrs.map((attr) => (
-                        <tr key={attr.id} className="border-b border-ink-100">
-                          <td className="py-2 pr-4 font-medium text-ink-600">{attr.label}</td>
-                          <td className="py-2 text-ink-800">{attr.value}</td>
-                        </tr>
+          <ProductTabs
+            tabs={[
+              {
+                id: "product",
+                label: "О товаре",
+                content: (
+                  <p className="text-ink-600">
+                    {product.short_description ?? "Информация о товаре уточняется у менеджера."}
+                  </p>
+                )
+              },
+              {
+                id: "info",
+                label: "Описание",
+                content: product.description ? (
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }}
+                  />
+                ) : (
+                  <p className="text-ink-400">Подробное описание уточняется у менеджера.</p>
+                )
+              },
+              {
+                id: "parameters",
+                label: "Характеристики",
+                content:
+                  attributeGroups.length > 0 ? (
+                    <div className="flex flex-col gap-6">
+                      {attributeGroups.map(([group, attrs]) => (
+                        <div key={group}>
+                          {group !== "Общие характеристики" && (
+                            <h3 className="mb-2 font-semibold text-ink-700">{group}</h3>
+                          )}
+                          <table className="w-full text-sm">
+                            <tbody>
+                              {attrs.map((attr) => (
+                                <tr key={attr.id} className="border-b border-ink-100">
+                                  <td className="py-2 pr-4 font-medium text-ink-600">{attr.label}</td>
+                                  <td className="py-2 text-ink-800">{attr.value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-card border border-ink-100 p-5">
-              <h3 className="mb-1 font-semibold text-ink-800">Доставка</h3>
-              <p className="mb-2 text-sm text-ink-500">
-                Доставляем во все регионы РФ либо предоставляем самовывоз со склада в Чебоксарах.
-              </p>
-              <Link href="/pages/delivery" className="text-sm font-medium text-brand-600 hover:underline">
-                Подробнее об условиях доставки →
-              </Link>
-            </div>
-            <div className="rounded-card border border-ink-100 p-5">
-              <h3 className="mb-1 font-semibold text-ink-800">Оплата</h3>
-              <p className="mb-2 text-sm text-ink-500">
-                Лизинг через партнёров, безналичный расчёт для юрлиц, наличные и карта в офисе.
-              </p>
-              <Link href="/pages/payment" className="text-sm font-medium text-brand-600 hover:underline">
-                Подробнее об оплате →
-              </Link>
-            </div>
-          </div>
+                    </div>
+                  ) : (
+                    <p className="text-ink-400">Характеристики уточняются у менеджера.</p>
+                  )
+              },
+              {
+                id: "delivery",
+                label: "Доставка",
+                content: (
+                  <div>
+                    <p className="mb-2 text-ink-600">
+                      Доставляем во все регионы РФ либо предоставляем самовывоз со склада в Чебоксарах.
+                    </p>
+                    <Link href="/pages/delivery" className="text-sm font-medium text-brand-600 hover:underline">
+                      Подробнее об условиях доставки →
+                    </Link>
+                  </div>
+                )
+              },
+              {
+                id: "pay",
+                label: "Оплата",
+                content: (
+                  <div>
+                    <p className="mb-2 text-ink-600">
+                      Лизинг через партнёров, безналичный расчёт для юрлиц, наличные и карта в офисе.
+                    </p>
+                    <Link href="/pages/payment" className="text-sm font-medium text-brand-600 hover:underline">
+                      Подробнее об оплате →
+                    </Link>
+                  </div>
+                )
+              }
+            ]}
+          />
         </div>
 
         <aside className="h-fit flex flex-col gap-4 rounded-card border border-ink-100 p-6">
