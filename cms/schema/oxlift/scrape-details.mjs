@@ -2,10 +2,18 @@
 // oxlift.ru (наш поставщик техники) — в отличие от scrape.mjs, который брал
 // только листинги категорий, здесь заходим на карточку каждого товара и
 // берём:
-//   - таблицу "Характеристики" (product__specifications) целиком — это
-//     факты (модель, размеры, вес и т.п.), не подлежат авторскому праву;
+//   - таблицу характеристик целиком (факты: модель, размеры, вес и т.п.,
+//     не подлежат авторскому праву). На странице их может быть две: короткий
+//     список (product__specifications) и более полная "Таблица
+//     характеристик:" (specifications-table, 3 колонки с ед. измерения) —
+//     берём вторую, если она есть, иначе первую;
 //   - НЕ берём тексты "О товаре"/"Описание" с их сайта — вместо этого
 //     генерируем свой текст на основе вытащенных характеристик.
+//
+// Идемпотентно в части "не найдено"/"нет таблицы" (эти товары не трогает),
+// но КАЖДЫЙ раз при успешном парсинге переписывает характеристики товара
+// набором, полученным на этот запуск — так повторный прогон подхватывает
+// более полную таблицу, если в прошлый раз досталась только короткая.
 //
 // Запуск: node schema/oxlift/scrape-details.mjs
 import { load } from "cheerio";
@@ -15,7 +23,8 @@ import {
   staticToken,
   readItems,
   createItem,
-  updateItem
+  updateItem,
+  deleteItems
 } from "@directus/sdk";
 
 const SITE = "https://oxlift.ru";
@@ -52,14 +61,27 @@ async function fetchProductPage(categorySlug, productSlug) {
   return res.text();
 }
 
-// Таблица "Характеристики" — только факты (label/value), copyright их не
-// касается.
-function parseSpecs(html) {
-  const $ = load(html);
+// Полная таблица "Таблица характеристик:" — 3 колонки (Наименование / Ед.
+// измерения / Значение).
+function parseDetailedSpecs($) {
   const specs = [];
-  // Разметка таблицы на сайте бывает двух видов (td.specifications_title/
-  // specifications_val ИЛИ td.strong/val) — берём просто первые два <td> в
-  // строке, без привязки к конкретному классу.
+  $("table.specifications-table tbody tr").each((_, row) => {
+    const cells = $(row).find("td");
+    if (cells.length < 3) return;
+    const label = $(cells[0]).text().trim();
+    const unit = $(cells[1]).text().trim();
+    const rawValue = $(cells[2]).text().trim();
+    if (!label || !rawValue) return;
+    specs.push({ label, value: unit ? `${rawValue} ${unit}` : rawValue });
+  });
+  return specs;
+}
+
+// Короткий список "Характеристики" — 2 колонки, встречается в двух вариантах
+// вёрстки (specifications_title/val ИЛИ strong/val) — берём просто первые
+// два <td> в строке, без привязки к конкретному классу.
+function parseShortSpecs($) {
+  const specs = [];
   $("table.product__specifications tr").each((_, row) => {
     const cells = $(row).find("td");
     if (cells.length < 2) return;
@@ -68,6 +90,13 @@ function parseSpecs(html) {
     if (label && value) specs.push({ label, value });
   });
   return specs;
+}
+
+function parseSpecs(html) {
+  const $ = load(html);
+  const detailed = parseDetailedSpecs($);
+  if (detailed.length > 0) return detailed;
+  return parseShortSpecs($);
 }
 
 const HEADLINE_KEYWORDS = [
@@ -114,32 +143,14 @@ async function main() {
     })
   );
 
-  const existingAttrs = await client.request(
-    readItems("product_attributes", { fields: ["product"], limit: -1 })
-  );
-  const attrCountByProduct = new Map();
-  for (const a of existingAttrs) {
-    attrCountByProduct.set(a.product, (attrCountByProduct.get(a.product) ?? 0) + 1);
-  }
-  // >=4: у части товаров уже есть 1-2 характеристики от старого regex-
-  // разбора short_description — этого мало, дозаполняем. От 4 и выше
-  // считаем, что таблица уже полная, пропускаем.
-  const productsWithAttrs = new Set(
-    [...attrCountByProduct.entries()].filter(([, count]) => count >= 4).map(([id]) => id)
-  );
-
   let processed = 0;
-  let skippedHasAttrs = 0;
+  let upgraded = 0;
   let skippedNoCategory = 0;
   let notFound = 0;
   let noSpecsOnPage = 0;
   let failed = 0;
 
   for (const product of products) {
-    if (productsWithAttrs.has(product.id)) {
-      skippedHasAttrs += 1;
-      continue;
-    }
     const category = product.category;
     if (!category?.slug) {
       skippedNoCategory += 1;
@@ -167,6 +178,23 @@ async function main() {
       continue;
     }
 
+    const existing = await client.request(
+      readItems("product_attributes", {
+        filter: { product: { _eq: product.id } },
+        fields: ["id"],
+        limit: -1
+      })
+    );
+    if (existing.length > 0) {
+      await client.request(
+        deleteItems(
+          "product_attributes",
+          existing.map((a) => a.id)
+        )
+      );
+      if (existing.length !== specs.length) upgraded += 1;
+    }
+
     for (const [index, spec] of specs.entries()) {
       await client.request(
         createItem("product_attributes", {
@@ -188,7 +216,9 @@ async function main() {
 
     processed += 1;
     if (processed % 10 === 0) {
-      console.log(`  ... обработано ${processed} (пропущено: уже есть характеристики ${skippedHasAttrs}, без категории ${skippedNoCategory}, не найдено на oxlift ${notFound}, без таблицы ${noSpecsOnPage}, ошибок ${failed})`);
+      console.log(
+        `  ... обработано ${processed} (обновлено с более полной таблицей: ${upgraded}, без категории ${skippedNoCategory}, не найдено на oxlift ${notFound}, без таблицы ${noSpecsOnPage}, ошибок ${failed})`
+      );
     }
 
     await sleep(350);
@@ -196,7 +226,7 @@ async function main() {
 
   console.log("\nГотово.");
   console.log(`Обработано: ${processed}`);
-  console.log(`Пропущено (уже есть характеристики): ${skippedHasAttrs}`);
+  console.log(`Из них дозаполнено более полной таблицей: ${upgraded}`);
   console.log(`Пропущено (без категории): ${skippedNoCategory}`);
   console.log(`Не найдено на oxlift.ru: ${notFound}`);
   console.log(`Найдено, но без таблицы характеристик: ${noSpecsOnPage}`);
