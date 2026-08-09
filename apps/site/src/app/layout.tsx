@@ -33,6 +33,11 @@ export const metadata: Metadata = {
   }
 };
 
+// Layout — статическая часть (шапка/подвал с телефоном/адресом из Directus).
+// Без revalidate данные из CMS запекались бы в билд один раз и не менялись
+// до следующего деплоя — обновляем в фоне раз в 5 минут (ISR).
+export const revalidate = 300;
+
 const navLinks = [
   { href: "/catalog", label: "Каталог" },
   { href: "/pages/service", label: "Сервис и гарантия" },

@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contacts" }
 };
 
+export const revalidate = 300;
+
 export default async function ContactsPage() {
   const settings = await kamsnab.getSettings().catch(() => null);
 
