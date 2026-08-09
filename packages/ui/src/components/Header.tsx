@@ -10,7 +10,7 @@ export interface HeaderProps {
   ctaHref?: string;
   ctaLabel?: string;
   onCtaClick?: () => void;
-  cnyRate?: { value: number; date: string } | null;
+  rates?: { date: string; usd: number; cny: number } | null;
 }
 
 export function Header({
@@ -21,7 +21,7 @@ export function Header({
   ctaHref = "#contact",
   ctaLabel = "Заказать звонок",
   onCtaClick,
-  cnyRate
+  rates
 }: HeaderProps) {
   const ctaClassName = "rounded-card bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600";
 
@@ -45,12 +45,13 @@ export function Header({
               {link.icon}
             </a>
           ))}
-          {cnyRate ? (
+          {rates ? (
             <span
-              title={`Курс ЦБ РФ на ${cnyRate.date}`}
-              className="ml-auto whitespace-nowrap text-sm text-ink-500"
+              title={`Курс ЦБ РФ на ${rates.date}`}
+              className="ml-auto flex items-center gap-3 whitespace-nowrap text-sm text-ink-500"
             >
-              ¥ = {cnyRate.value.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
+              <span>$ = {rates.usd.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽</span>
+              <span>¥ = {rates.cny.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽</span>
             </span>
           ) : null}
         </nav>

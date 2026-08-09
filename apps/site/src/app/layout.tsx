@@ -5,7 +5,7 @@ import { Heart, GitCompare } from "lucide-react";
 import { Footer } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
 import { siteUrl, siteName, safeJsonLd } from "@/lib/site";
-import { getCnyRate } from "@/lib/currency";
+import { getCbrRates } from "@/lib/currency";
 import { SiteHeader } from "./SiteHeader";
 import "./globals.css";
 
@@ -53,9 +53,9 @@ const iconLinks = [
 ];
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [settings, cnyRate] = await Promise.all([
+  const [settings, rates] = await Promise.all([
     kamsnab.getSettings().catch(() => null),
-    getCnyRate()
+    getCbrRates()
   ]);
 
   const organizationJsonLd = {
@@ -100,7 +100,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           phone={settings?.phone ?? "+7 (953) 448-37-58"}
           navLinks={navLinks}
           iconLinks={iconLinks}
-          cnyRate={cnyRate}
+          rates={rates}
         />
         <main>{children}</main>
         <Footer
