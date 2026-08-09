@@ -10,6 +10,7 @@ export interface HeaderProps {
   ctaHref?: string;
   ctaLabel?: string;
   onCtaClick?: () => void;
+  cnyRate?: { value: number; date: string } | null;
 }
 
 export function Header({
@@ -19,7 +20,8 @@ export function Header({
   iconLinks = [],
   ctaHref = "#contact",
   ctaLabel = "Заказать звонок",
-  onCtaClick
+  onCtaClick,
+  cnyRate
 }: HeaderProps) {
   const ctaClassName = "rounded-card bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600";
 
@@ -43,6 +45,14 @@ export function Header({
               {link.icon}
             </a>
           ))}
+          {cnyRate ? (
+            <span
+              title={`Курс ЦБ РФ на ${cnyRate.date}`}
+              className="ml-auto whitespace-nowrap text-sm text-ink-500"
+            >
+              ¥ = {cnyRate.value.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
+            </span>
+          ) : null}
         </nav>
       </div>
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-3">
