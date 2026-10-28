@@ -16,6 +16,8 @@ import {
   createPermission,
   readPermissions,
   updatePermission,
+  readFolders,
+  createFolder,
   readFlows,
   createFlow,
   updateFlow,
@@ -390,52 +392,73 @@ async function main() {
     console.log('+ policy "Kamsnab Public Access" привязана к анонимному (Public) доступу');
   }
 
-  const readOnlyCollections = [
-    "categories",
-    "products",
-    "product_attributes",
-    "pages",
-    "settings",
-    // Публичный доступ к самим файлам (фото товаров/категорий) — без этого
-    // /assets/<id> отдаёт 403, даже если ссылающееся поле читаемо.
-    "directus_files"
-  ];
+  // Файлы из этой папки анонимам не отдаются (ни в /files, ни в /assets) —
+  // сюда класть то, что не должно быть на сайте (договоры, прайсы и т.п.).
+  // Остальные файлы публичные: фото товаров загружаются скриптами без папки.
+  const folders = await authed.request(readFolders({ limit: -1 }));
+  let privateFolder = folders.find((f) => f.name === "Приватные" && !f.parent);
+  if (!privateFolder) {
+    privateFolder = await authed.request(createFolder({ name: "Приватные" }));
+    console.log('+ папка файлов "Приватные" создана');
+  }
+
   const existingPermissions = await authed.request(readPermissions());
 
-  for (const collection of readOnlyCollections) {
-    const already = existingPermissions.some(
-      (p) => p.collection === collection && p.action === "read" && p.policy === publicPolicy.id
+  // Создаёт право публичной политики или приводит существующее к нужному виду
+  // (фильтры прав менялись — на уже развёрнутом Directus их надо обновить).
+  async function ensurePublicPermission(collection, action, { fields = ["*"], permissions = {}, validation = null }) {
+    const existing = existingPermissions.find(
+      (p) => p.collection === collection && p.action === action && p.policy === publicPolicy.id
     );
-    if (already) continue;
-    await authed.request(
-      createPermission({
-        policy: publicPolicy.id,
-        collection,
-        action: "read",
-        fields: ["*"],
-        permissions: {}
-      })
-    );
+    if (!existing) {
+      await authed.request(
+        createPermission({ policy: publicPolicy.id, collection, action, fields, permissions, validation })
+      );
+      console.log(`+ permission ${collection}.${action} создано`);
+      return;
+    }
+    const isSame =
+      JSON.stringify(existing.fields) === JSON.stringify(fields) &&
+      JSON.stringify(existing.permissions ?? {}) === JSON.stringify(permissions) &&
+      JSON.stringify(existing.validation ?? null) === JSON.stringify(validation);
+    if (isSame) return;
+    await authed.request(updatePermission(existing.id, { fields, permissions, validation }));
+    console.log(`- permission ${collection}.${action} обновлено`);
   }
 
-  const leadCreateFields = ["name", "phone", "message", "product", "page_url", "source"];
-  const leadCreatePermission = existingPermissions.find(
-    (p) => p.collection === "leads" && p.action === "create" && p.policy === publicPolicy.id
-  );
-  if (!leadCreatePermission) {
-    await authed.request(
-      createPermission({
-        policy: publicPolicy.id,
-        collection: "leads",
-        action: "create",
-        fields: leadCreateFields,
-        permissions: {}
-      })
-    );
-  } else if (!leadCreateFields.every((f) => leadCreatePermission.fields?.includes(f))) {
-    await authed.request(updatePermission(leadCreatePermission.id, { fields: leadCreateFields }));
-    console.log("- permission leads.create уже существует, обновил список полей");
-  }
+  const published = { status: { _eq: "published" } };
+  await ensurePublicPermission("categories", "read", {});
+  await ensurePublicPermission("pages", "read", {});
+  await ensurePublicPermission("settings", "read", {});
+  // Черновики и архив не должны быть видны через API.
+  await ensurePublicPermission("products", "read", { permissions: published });
+  await ensurePublicPermission("product_attributes", "read", { permissions: { product: published } });
+  // Публичный доступ к самим файлам (фото товаров/категорий) — без этого
+  // /assets/<id> отдаёт 403, даже если ссылающееся поле читаемо.
+  await ensurePublicPermission("directus_files", "read", {
+    permissions: { _or: [{ folder: { _null: true } }, { folder: { _neq: privateFolder.id } }] }
+  });
+
+  // Заявки анонимы создают напрямую в Directus (мини-аппы ходят сюда из
+  // браузера), поэтому проверка содержимого должна быть здесь, а не только на
+  // клиенте: поля подставляются в HTML-письмо менеджеру без экранирования.
+  // Joi-строка не пропускает null/"", отсюда _or для необязательных полей.
+  const noMarkup = (max) => `^[^<>"]{1,${max}}$`;
+  const optional = (field, rule) => ({
+    _or: [{ [field]: { _null: true } }, { [field]: { _eq: "" } }, { [field]: rule }]
+  });
+  await ensurePublicPermission("leads", "create", {
+    fields: ["name", "phone", "message", "product", "page_url", "source"],
+    validation: {
+      _and: [
+        { name: { _regex: noMarkup(100) } },
+        { phone: { _regex: "^[78][0-9]{10}$" } },
+        optional("message", { _regex: noMarkup(2000) }),
+        optional("page_url", { _regex: `^https?://[^<>"\\s]{1,500}$` }),
+        { source: { _in: ["site", "telegram", "max"] } }
+      ]
+    }
+  });
 
   console.log("Готово.");
 }

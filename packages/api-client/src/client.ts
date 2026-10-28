@@ -49,7 +49,7 @@ export function createKamsnabClient(url: string) {
     async getProductBySlug(slug: string): Promise<Product | null> {
       const items = await directus.request(
         readItems("products", {
-          filter: { slug: { _eq: slug } },
+          filter: { slug: { _eq: slug }, status: { _eq: "published" } },
           fields: ["*", { category: ["*"], attributes: ["*"] }],
           limit: 1
         })
@@ -84,14 +84,23 @@ export function createKamsnabClient(url: string) {
 
     async createLead(lead: Lead): Promise<void> {
       // Поля из публичной формы попадают в HTML-письмо менеджеру без
-      // экранирования (шаблон Directus Flow) — вырезаем теги здесь, чтобы
-      // посетитель не мог вставить разметку/скрипты в письмо.
-      const stripTags = (value: string) => value.replace(/<[^>]*>/g, "");
+      // экранирования (шаблон Directus Flow). Directus сам отклоняет заявки с
+      // <, > и " (validation в cms/schema/seed.mjs) — здесь их вырезаем, чтобы
+      // обычный посетитель, случайно набравший кавычки, не получил ошибку.
+      // Длины совпадают с лимитами той же validation.
+      const stripMarkup = (value: string, maxLength: number) =>
+        value.replace(/[<>"]/g, "").trim().slice(0, maxLength);
+      const message = lead.message ? stripMarkup(lead.message, 2000) : "";
       const sanitized: Lead = {
-        ...lead,
-        name: stripTags(lead.name),
-        message: lead.message ? stripTags(lead.message) : lead.message,
-        page_url: lead.page_url && /^https?:\/\//.test(lead.page_url) ? stripTags(lead.page_url) : null
+        name: stripMarkup(lead.name, 100),
+        phone: lead.phone,
+        message: message || null,
+        product: lead.product ?? null,
+        page_url:
+          lead.page_url && /^https?:\/\//.test(lead.page_url)
+            ? lead.page_url.replace(/[<>"\s]/g, "").slice(0, 500)
+            : null,
+        source: lead.source
       };
 
       // Публичная роль имеет только create на leads, без read — Directus
