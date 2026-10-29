@@ -8,7 +8,7 @@ import { toCardProps } from "@/lib/product-card";
 import { formatRub, keyAttributes, sortAttributes, specsLine } from "@/lib/product-specs";
 import { kamsnab, directusUrl } from "@/lib/directus";
 import { ProductCardImage } from "@/components/ProductCardImage";
-import { siteUrl, safeJsonLd, breadcrumbJsonLd } from "@/lib/site";
+import { siteUrl, safeJsonLd, breadcrumbJsonLd, metaDescription } from "@/lib/site";
 import { ProductGallery } from "./ProductGallery";
 import { ProductActions } from "./ProductActions";
 import { ProductTabs, ProductTabLink } from "./ProductTabs";
@@ -19,14 +19,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await kamsnab.getProductBySlug(slug);
   if (!product) return {};
 
-  const category = typeof product.category === "object" ? product.category : undefined;
-  const description =
-    product.short_description ??
-    `${product.title}${category ? ` — ${category.name}` : ""}. Продажа и доставка в КАМСНАБ.`;
+  // Коммерческий хвост в title — под запросы «купить …» с гео; без описания в
+  // CMS (у части товаров его нет) собираем description из цены и условий.
+  const price = product.price != null ? `цена ${formatRub(product.price)}` : "цена по запросу";
+  const description = metaDescription(
+    product.short_description?.trim() ||
+      `${product.title}: ${price}. Продажа в Чебоксарах, доставка по России, гарантия 12 месяцев.`
+  );
   const imageUrl = assetUrl(directusUrl, product.image);
 
   return {
-    title: product.title,
+    title: `${product.title} — купить в Чебоксарах`,
     description,
     alternates: { canonical: `/catalog/${product.slug}` },
     openGraph: {
@@ -95,7 +98,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     "@type": "Product",
     name: product.title,
     sku: product.sku ?? undefined,
-    description: product.short_description ?? undefined,
+    description: product.short_description?.replace(/\s+/g, " ").trim() || undefined,
     image: galleryImages.length > 0 ? galleryImages : undefined,
     category: category?.name,
     // Offer без цены невалиден для Яндекса и Google — у товаров «по запросу»

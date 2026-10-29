@@ -37,8 +37,9 @@ export async function categoryMetadata(slug: string, page: number): Promise<Meta
   const pageSuffix = page > 1 ? ` Страница ${page}.` : "";
 
   return {
-    title: `${category.name}${pageTitleSuffix(page)}`,
+    title: `${category.name} — купить в Чебоксарах, цены${pageTitleSuffix(page)}`,
     description: `${description}${pageSuffix}`,
+    openGraph: { title: category.name, description },
     // Каждая страница пагинации канонична сама себе.
     alternates: { canonical: categoryPageHref(category.slug, page) }
   };

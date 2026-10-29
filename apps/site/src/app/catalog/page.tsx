@@ -29,7 +29,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Catalog
   const page = parsePageParam(params.page) ?? 1;
 
   const base = {
-    title: `Каталог складской техники${pageTitleSuffix(page)}`,
+    title: `Каталог складской техники — цены, купить в Чебоксарах${pageTitleSuffix(page)}`,
     description: "Весь каталог складской техники КАМСНАБ: вилочные погрузчики, штабелёры, тележки и другое оборудование."
   };
 

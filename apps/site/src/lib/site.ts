@@ -36,3 +36,13 @@ export function breadcrumbJsonLd(items: { label: string; href?: string }[]) {
     }))
   };
 }
+
+// Текст для meta description: схлопываем пробелы и переносы строк из CMS и
+// обрезаем по границе слова — Яндекс показывает в сниппете ~160 символов.
+export function metaDescription(text: string, max = 160): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > max / 2 ? cut.slice(0, lastSpace) : cut).replace(/[\s,.;:—-]+$/, "")}…`;
+}
