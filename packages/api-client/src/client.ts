@@ -1,4 +1,5 @@
 import { createDirectus, rest, readItems, readSingleton } from "@directus/sdk";
+import type { QueryFilter } from "@directus/sdk";
 import type { KamsnabSchema, Category, Product, Page, Lead, Settings } from "./types";
 
 export function assetUrl(directusUrl: string, fileId: string | null | undefined): string | undefined {
@@ -16,6 +17,29 @@ export function getProductBadge(product: Pick<Product, "category" | "price">): s
   return undefined;
 }
 
+// Поля, которые нужны карточке товара в списке (см. ProductCardData в @kamsnab/ui
+// и getProductBadge — ему нужен category.slug).
+const PRODUCT_CARD_FIELDS = [
+  "id",
+  "title",
+  "slug",
+  "sku",
+  "price",
+  "price_note",
+  "image",
+  "sort",
+  "status",
+  { category: ["id", "name", "slug"] }
+] as const;
+
+function productsFilter(params: { categorySlug?: string; search?: string }): QueryFilter<KamsnabSchema, Product> {
+  return {
+    status: { _eq: "published" as const },
+    ...(params.categorySlug ? { category: { slug: { _eq: params.categorySlug } } } : {}),
+    ...(params.search ? { title: { _icontains: params.search } } : {})
+  };
+}
+
 export function createKamsnabClient(url: string) {
   const directus = createDirectus<KamsnabSchema>(url).with(rest());
 
@@ -31,25 +55,52 @@ export function createKamsnabClient(url: string) {
       );
     },
 
-    getProducts(params: { categorySlug?: string; search?: string; limit?: number } = {}): Promise<Product[]> {
+    // offset/fields — необязательные (добавлены для пагинации каталога на сайте);
+    // мини-приложения вызывают getProducts({ categorySlug }) как раньше.
+    // fields: "card" — только поля для карточки товара (без описаний и
+    // характеристик), чтобы не тащить лишнее в HTML/RSC-payload.
+    getProducts(
+      params: {
+        categorySlug?: string;
+        search?: string;
+        limit?: number;
+        offset?: number;
+        fields?: "full" | "card";
+      } = {}
+    ): Promise<Product[]> {
       return directus.request(
         readItems("products", {
-          filter: {
-            status: { _eq: "published" },
-            ...(params.categorySlug ? { category: { slug: { _eq: params.categorySlug } } } : {}),
-            ...(params.search ? { title: { _icontains: params.search } } : {})
-          },
-          fields: ["*", { category: ["*"], attributes: ["*"] }],
-          sort: ["sort"],
-          limit: params.limit ?? -1
+          filter: productsFilter(params),
+          fields: params.fields === "card" ? PRODUCT_CARD_FIELDS : ["*", { category: ["*"], attributes: ["*"] }],
+          // id — вторичный ключ: у товаров sort часто пуст, без него порядок
+          // между запросами с offset нестабилен и пагинация теряет товары.
+          sort: ["sort", "id"],
+          limit: params.limit ?? -1,
+          ...(params.offset ? { offset: params.offset } : {})
         })
       ) as Promise<Product[]>;
     },
 
+    // Количество опубликованных товаров с теми же фильтрами, что у getProducts
+    // (для пагинации). typed Query SDK не умеет meta=filter_count — сырой fetch,
+    // как в getStats.
+    async countProducts(params: { categorySlug?: string; search?: string } = {}): Promise<number> {
+      const query = new URLSearchParams({ limit: "0", meta: "filter_count" });
+      query.set("filter", JSON.stringify(productsFilter(params)));
+      const res = await fetch(`${url}/items/products?${query.toString()}`);
+      if (!res.ok) {
+        throw new Error(`Failed to count products: ${res.status}`);
+      }
+      const json = await res.json();
+      return Number(json.meta?.filter_count ?? 0);
+    },
+
+    // Только опубликованные: черновики не должны открываться на сайте
+    // (публичная роль Directus их читает).
     async getProductBySlug(slug: string): Promise<Product | null> {
       const items = await directus.request(
         readItems("products", {
-          filter: { slug: { _eq: slug } },
+          filter: { slug: { _eq: slug }, status: { _eq: "published" } },
           fields: ["*", { category: ["*"], attributes: ["*"] }],
           limit: 1
         })

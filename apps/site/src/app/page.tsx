@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { PackageCheck, ShieldCheck, Truck } from "lucide-react";
-import { assetUrl, getProductBadge, type Product } from "@kamsnab/api-client";
+import { assetUrl } from "@kamsnab/api-client";
 import { Container, Button, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
 import { ProductCardImage } from "@/components/ProductCardImage";
+import { toCardProps } from "@/lib/product-card";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" }
@@ -40,24 +41,11 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-function toCardProps(product: Product, badge?: string) {
-  return {
-    slug: product.slug,
-    title: product.title,
-    sku: product.sku,
-    price: product.price,
-    priceNote: product.price_note ?? undefined,
-    imageUrl: assetUrl(directusUrl, product.image),
-    categoryName: typeof product.category === "object" && product.category ? product.category.name : undefined,
-    badge: badge ?? getProductBadge(product)
-  };
-}
-
 export default async function HomePage() {
   const [categories, forklifts, promoPool, stats] = await Promise.all([
     kamsnab.getCategories().catch(() => []),
-    kamsnab.getProducts({ categorySlug: "vilochnye-pogruzchiki", limit: 8 }).catch(() => []),
-    kamsnab.getProducts({ limit: 60 }).catch(() => []),
+    kamsnab.getProducts({ categorySlug: "vilochnye-pogruzchiki", limit: 8, fields: "card" }).catch(() => []),
+    kamsnab.getProducts({ limit: 60, fields: "card" }).catch(() => []),
     kamsnab.getStats().catch(() => ({ categories: 0, products: 0 }))
   ]);
 
