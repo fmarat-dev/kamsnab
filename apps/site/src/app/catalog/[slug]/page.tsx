@@ -49,7 +49,7 @@ function groupAttributes(attributes: ProductAttribute[]) {
   return Array.from(groups.entries());
 }
 
-const DEFAULT_PHONE = "+7 (953) 448-37-58";
+const DEFAULT_PHONE = "+7 (953) 448-27-58";
 
 const benefits = [
   "Гарантия 12 месяцев или 2000 моточасов",

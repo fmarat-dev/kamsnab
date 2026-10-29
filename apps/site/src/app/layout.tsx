@@ -123,7 +123,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </noscript>
         <SiteHeader
           logo={<Logo />}
-          phone={settings?.phone ?? "+7 (953) 448-37-58"}
+          phone={settings?.phone ?? "+7 (953) 448-27-58"}
           navLinks={navLinks}
           iconLinks={iconLinks}
           rates={rates}
@@ -134,7 +134,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <Footer
           companyName={settings?.company_name ?? 'ООО "КАМСНАБ"'}
           address={settings?.address ?? "г. Чебоксары, ул. Вурнарское шоссе, д.11, офис 2"}
-          phone={settings?.phone ?? "+7 (953) 448-37-58"}
+          phone={settings?.phone ?? "+7 (953) 448-27-58"}
           phoneLandline={settings?.phone_landline ?? "+7 (8352) 285-283"}
           email={settings?.email ?? "kam-snab@mail.ru"}
           workHours={settings?.work_hours ?? "Пн-Пт: 09:00–18:00, Сб-Вс: выходной"}

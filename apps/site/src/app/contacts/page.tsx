@@ -21,8 +21,8 @@ export default async function ContactsPage() {
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-ink-800">Контакты</h1>
           <p className="text-ink-600">{settings?.address ?? "г. Чебоксары, ул. Вурнарское шоссе, д.11, офис 2"}</p>
-          <a href={`tel:${(settings?.phone ?? "+7 (953) 448-37-58").replace(/[^+\d]/g, "")}`} className="font-semibold text-brand-600">
-            {settings?.phone ?? "+7 (953) 448-37-58"}
+          <a href={`tel:${(settings?.phone ?? "+7 (953) 448-27-58").replace(/[^+\d]/g, "")}`} className="font-semibold text-brand-600">
+            {settings?.phone ?? "+7 (953) 448-27-58"}
           </a>
           <a
             href={`tel:${(settings?.phone_landline ?? "+7 (8352) 285-283").replace(/[^+\d]/g, "")}`}
