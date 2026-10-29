@@ -49,17 +49,47 @@ module.exports = {
           dark: "#128C7E"
         }
       },
+      // Шрифты подключает сайт через next/font (CSS-переменные на <html>).
+      // var() с запасным значением: в мини-аппах переменных нет, и без запасного
+      // значения вся декларация font-family стала бы невалидной (откат к serif).
       fontFamily: {
         sans: [
+          "var(--font-inter, Inter)",
           "Inter",
           "-apple-system",
           "Segoe UI",
           "Roboto",
           "sans-serif"
-        ]
+        ],
+        // Заголовки, логотип, цены, крупные цифры — Oswald, ВЕРХНИЙ регистр.
+        display: ["var(--font-oswald, Oswald)", "Oswald", "Inter", "sans-serif"]
+      },
+      fontSize: {
+        // Типографическая шкала (стиль C). Заголовки — font-display uppercase.
+        display: ["3.625rem", { lineHeight: "1.04", letterSpacing: "0.01em", fontWeight: "700" }],
+        h1: ["2.25rem", { lineHeight: "1.1", fontWeight: "700" }],
+        h2: ["2.375rem", { lineHeight: "1.1", fontWeight: "700" }],
+        h3: ["1.1875rem", { lineHeight: "1.25", fontWeight: "600" }],
+        price: ["1.75rem", { lineHeight: "1.1", fontWeight: "600" }]
+      },
+      letterSpacing: {
+        // Кнопки/навигация — caps; надзаголовки и бейджи — label; логотип — logo.
+        caps: "0.05em",
+        logo: "0.06em",
+        label: "0.08em",
+        eyebrow: "0.14em"
       },
       borderRadius: {
-        card: "0.75rem"
+        card: "0.75rem",
+        button: "0.5rem",
+        tile: "0.5rem",
+        showcase: "1rem"
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(30, 44, 57, 0.04)",
+        "card-hover": "0 12px 32px rgba(30, 44, 57, 0.10)",
+        raised: "0 8px 24px rgba(30, 44, 57, 0.08)",
+        "bar-top": "0 -8px 24px rgba(30, 44, 57, 0.08)"
       }
     }
   }

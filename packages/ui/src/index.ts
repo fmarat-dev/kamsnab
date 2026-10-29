@@ -1,5 +1,10 @@
 export { Button } from "./components/Button";
+export { buttonClassName } from "./lib/button-styles";
+export type { ButtonVariant, ButtonSize } from "./lib/button-styles";
 export type { ButtonProps } from "./components/Button";
+
+export { Logo } from "./components/Logo";
+export type { LogoProps } from "./components/Logo";
 
 export { ProductCard } from "./components/ProductCard";
 export type { ProductCardData, ProductCardProps } from "./components/ProductCard";
@@ -14,7 +19,7 @@ export { Header } from "./components/Header";
 export type { HeaderProps } from "./components/Header";
 
 export { Footer } from "./components/Footer";
-export type { FooterProps } from "./components/Footer";
+export type { FooterProps, FooterLink } from "./components/Footer";
 
 export { Container } from "./components/Container";
 

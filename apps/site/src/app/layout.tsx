@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
+import { Inter, Oswald } from "next/font/google";
 import { Heart, GitCompare } from "lucide-react";
-import { Footer } from "@kamsnab/ui";
+import { Footer, Logo } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
 import { siteUrl, siteName, safeJsonLd, openingHoursSpecification } from "@/lib/site";
 import { getCbrRates } from "@/lib/currency";
 import { SiteHeader } from "./SiteHeader";
 import "./globals.css";
+
+// Шрифты стиля C: Inter — текст, Oswald — заголовки/цены/логотип.
+// Переменные (--font-inter/--font-oswald) читает tailwind.preset.cjs.
+const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
+const oswald = Oswald({ subsets: ["latin", "cyrillic"], variable: "--font-oswald", display: "swap" });
 
 const defaultDescription =
   "Продажа и обслуживание вилочных погрузчиков, штабелёров и складской техники в Чебоксарах. Доставка по всей России.";
@@ -53,10 +59,19 @@ const iconLinks = [
 ];
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [settings, rates] = await Promise.all([
+  const [settings, rates, categories] = await Promise.all([
     kamsnab.getSettings().catch(() => null),
-    getCbrRates()
+    getCbrRates(),
+    kamsnab.getCategories().catch(() => [])
   ]);
+
+  const footerCatalogLinks = [
+    ...categories.slice(0, 6).map((category) => ({
+      href: `/catalog/category/${category.slug}`,
+      label: category.name
+    })),
+    { href: "/catalog", label: "Весь каталог →" }
+  ];
 
   // LocalBusiness — для региональной привязки к Чебоксарам в выдаче.
   const organizationJsonLd = {
@@ -79,7 +94,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   };
 
   return (
-    <html lang="ru">
+    <html lang="ru" className={`${inter.variable} ${oswald.variable}`}>
       <body>
         <script
           type="application/ld+json"
@@ -104,11 +119,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </div>
         </noscript>
         <SiteHeader
-          logo={<span className="text-xl font-extrabold text-brand-600">КАМСНАБ</span>}
+          logo={<Logo />}
           phone={settings?.phone ?? "+7 (953) 448-37-58"}
           navLinks={navLinks}
           iconLinks={iconLinks}
           rates={rates}
+          address={settings?.address ?? "г. Чебоксары, ул. Вурнарское шоссе, д.11, офис 2"}
+          workHours={settings?.work_hours ?? "Пн-Пт: 09:00–18:00, Сб-Вс: выходной"}
         />
         <main>{children}</main>
         <Footer
@@ -118,6 +135,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           phoneLandline={settings?.phone_landline ?? "+7 (8352) 285-283"}
           email={settings?.email ?? "kam-snab@mail.ru"}
           workHours={settings?.work_hours ?? "Пн-Пт: 09:00–18:00, Сб-Вс: выходной"}
+          catalogLinks={footerCatalogLinks}
         />
       </body>
     </html>

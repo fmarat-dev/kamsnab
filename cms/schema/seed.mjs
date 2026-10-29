@@ -358,6 +358,23 @@ async function main() {
   // На случай если коллекция "settings" уже была создана раньше без этого поля.
   await ensureField("settings", { field: "phone_landline", type: "string", meta: { interface: "input" } });
 
+  // «Хит продаж» в первом экране главной — менеджер выбирает товар сам.
+  // Пусто → сайт берёт товар по умолчанию (см. apps/site/src/lib/featured.ts).
+  const featuredCreated = await ensureField("settings", {
+    field: "featured_product",
+    type: "uuid",
+    meta: { interface: "select-dropdown-m2o", special: ["m2o"], note: "Хит продаж на главной" }
+  });
+  if (featuredCreated) {
+    await authed.request(
+      createRelation({
+        collection: "settings",
+        field: "featured_product",
+        related_collection: "products"
+      })
+    );
+  }
+
   // --- Публичный доступ: read-only каталог/страницы/настройки, insert-only заявки ---
   const policies = await authed.request(readPolicies());
   let publicPolicy = policies.find((p) => p.name === "Kamsnab Public Access");

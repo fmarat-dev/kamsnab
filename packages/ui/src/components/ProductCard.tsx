@@ -13,6 +13,8 @@ export interface ProductCardData {
   price?: number | null;
   priceNote?: string;
   badge?: string;
+  // Короткая строка характеристик («2000 кг · подъём 3000 мм»), если есть.
+  specs?: string;
 }
 
 export interface ProductCardProps {
@@ -26,6 +28,9 @@ export interface ProductCardProps {
   // именно элементом, не функцией: функции нельзя передавать из серверных
   // компонентов в клиентские через границу RSC.
   image?: ReactNode;
+  // Подпись кнопки внизу карточки. По умолчанию: «Подробнее» при известной
+  // цене, «Запросить цену» — когда цены нет. false — скрыть кнопку.
+  ctaLabel?: string | false;
 }
 
 function formatPrice(price?: number | null, priceNote?: string) {
@@ -34,11 +39,13 @@ function formatPrice(price?: number | null, priceNote?: string) {
   return priceNote ? `${priceNote} ${formatted} ₽` : `${formatted} ₽`;
 }
 
-export function ProductCard({ product, href, onSelect, showCompare, showFavorite, image }: ProductCardProps) {
+export function ProductCard({ product, href, onSelect, showCompare, showFavorite, image, ctaLabel }: ProductCardProps) {
   const compareSlugs = useCompareSlugs();
   const favoriteSlugs = useFavoriteSlugs();
   const isCompared = showCompare ? compareSlugs.includes(product.slug) : false;
   const isFavorite = showFavorite ? favoriteSlugs.includes(product.slug) : false;
+  const hasPrice = product.price != null;
+  const cta = ctaLabel === false ? null : ctaLabel ?? (hasPrice ? "Подробнее" : "Запросить цену");
 
   return (
     <a
@@ -49,16 +56,16 @@ export function ProductCard({ product, href, onSelect, showCompare, showFavorite
           onSelect(product.slug);
         }
       }}
-      className="group flex flex-col overflow-hidden rounded-card border border-ink-100 bg-white transition-shadow hover:shadow-lg"
+      className="group flex h-full flex-col overflow-hidden rounded-card border border-ink-100 bg-white shadow-card transition-shadow hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-ink-50 p-4">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-ink-50">
         {product.badge && (
-          <span className="absolute left-3 top-3 z-10 rounded-full bg-accent-500 px-3 py-1 text-xs font-semibold text-white">
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-brand-700 px-2.5 py-1 text-[11px] font-bold uppercase tracking-label text-white">
             {product.badge}
           </span>
         )}
         {(showCompare || showFavorite) && (
-          <div className="absolute right-3 top-3 z-10 flex gap-2">
+          <div className="absolute right-2 top-2 z-10 flex flex-col gap-1.5">
             {showFavorite && (
               <button
                 type="button"
@@ -69,16 +76,16 @@ export function ProductCard({ product, href, onSelect, showCompare, showFavorite
                   event.stopPropagation();
                   toggleFavoriteSlug(product.slug);
                 }}
-                className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full shadow-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ${
                   isFavorite
-                    ? "border-accent-500 bg-accent-500 text-white"
-                    : "border-ink-200 bg-white/90 text-ink-500 hover:border-accent-400 hover:text-accent-600"
+                    ? "bg-accent-600 text-white"
+                    : "bg-white text-ink-500 hover:text-accent-600"
                 }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24"
                   fill={isFavorite ? "currentColor" : "none"}
                   stroke="currentColor"
@@ -100,16 +107,16 @@ export function ProductCard({ product, href, onSelect, showCompare, showFavorite
                   event.stopPropagation();
                   toggleCompareSlug(product.slug);
                 }}
-                className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full shadow-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${
                   isCompared
-                    ? "border-brand-600 bg-brand-600 text-white"
-                    : "border-ink-200 bg-white/90 text-ink-500 hover:border-brand-400 hover:text-brand-600"
+                    ? "bg-brand-600 text-white"
+                    : "bg-white text-ink-500 hover:text-brand-600"
                 }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -133,7 +140,7 @@ export function ProductCard({ product, href, onSelect, showCompare, showFavorite
             <img
               src={product.imageUrl}
               alt={product.title}
-              className="h-full w-full object-contain transition-transform group-hover:scale-105"
+              className="h-full w-full object-contain p-6 mix-blend-multiply transition-transform group-hover:scale-105"
               loading="lazy"
             />
           )
@@ -141,17 +148,31 @@ export function ProductCard({ product, href, onSelect, showCompare, showFavorite
           <div className="flex h-full w-full items-center justify-center text-ink-300">Нет фото</div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-1 p-4">
+      <div className="flex flex-1 flex-col gap-2 px-5 pb-5 pt-4">
         {product.categoryName && (
-          <span className="text-xs font-medium uppercase tracking-wide text-brand-600">
-            {product.categoryName}
-          </span>
+          <span className="text-[11px] font-bold uppercase tracking-label text-brand-700">{product.categoryName}</span>
         )}
-        <h3 className="font-semibold text-ink-800">{product.title}</h3>
+        {product.specs && <span className="text-[13px] text-ink-400">{product.specs}</span>}
+        <h3 className="text-base font-semibold leading-snug text-ink-800 group-hover:text-brand-700">{product.title}</h3>
         {product.sku && <span className="text-xs text-ink-400">Артикул: {product.sku}</span>}
-        <p className="mt-auto pt-2 text-lg font-bold text-ink-900">
+        <p
+          className={`mt-auto pt-1 font-display ${
+            hasPrice ? "text-price text-ink-900" : "text-xl font-semibold uppercase tracking-caps text-ink-500"
+          }`}
+        >
           {formatPrice(product.price, product.priceNote)}
         </p>
+        {cta && (
+          <span
+            className={`mt-1 inline-flex min-h-[2.75rem] items-center justify-center rounded-button px-3 text-[13px] font-bold uppercase tracking-caps transition-colors ${
+              hasPrice
+                ? "border border-ink-200 text-ink-800 group-hover:border-ink-300 group-hover:bg-ink-50"
+                : "bg-accent-600 text-white group-hover:bg-accent-700"
+            }`}
+          >
+            {cta}
+          </span>
+        )}
       </div>
     </a>
   );

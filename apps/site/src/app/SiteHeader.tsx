@@ -11,8 +11,8 @@ export function SiteHeader(props: SiteHeaderProps) {
 
   return (
     <>
-      <Header {...props} ctaLabel="Обратный звонок" onCtaClick={() => setOpen(true)} />
-      <Modal open={open} onClose={() => setOpen(false)} title="Обратный звонок">
+      <Header {...props} ctaLabel="Оставить заявку" onCtaClick={() => setOpen(true)} />
+      <Modal open={open} onClose={() => setOpen(false)} title="Оставить заявку">
         <ContactLeadForm />
       </Modal>
     </>

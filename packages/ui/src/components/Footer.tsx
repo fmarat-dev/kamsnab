@@ -1,3 +1,10 @@
+import { Logo } from "./Logo";
+
+export interface FooterLink {
+  href: string;
+  label: string;
+}
+
 export interface FooterProps {
   companyName: string;
   address: string;
@@ -5,40 +12,115 @@ export interface FooterProps {
   phoneLandline?: string;
   email: string;
   workHours?: string;
+  // Колонка «Каталог» (обычно — категории). Без неё — ссылка на весь каталог.
+  catalogLinks?: FooterLink[];
+  // Колонка «Покупателям».
+  infoLinks?: FooterLink[];
+  // Подпись под логотипом.
+  tagline?: string;
 }
 
-export function Footer({ companyName, address, phone, phoneLandline, email, workHours }: FooterProps) {
+const defaultCatalogLinks: FooterLink[] = [{ href: "/catalog", label: "Весь каталог" }];
+
+const defaultInfoLinks: FooterLink[] = [
+  { href: "/pages/service", label: "Сервис и гарантия" },
+  { href: "/pages/payment", label: "Оплата" },
+  { href: "/pages/delivery", label: "Доставка" },
+  { href: "/contacts", label: "Контакты" }
+];
+
+const telHref = (phone: string) => `tel:${phone.replace(/[^+\d]/g, "")}`;
+
+function ColumnTitle({ children }: { children: string }) {
+  return <p className="mb-3 text-[13px] font-bold uppercase tracking-logo text-white">{children}</p>;
+}
+
+const linkClassName = "transition-colors hover:text-white";
+
+export function Footer({
+  companyName,
+  address,
+  phone,
+  phoneLandline,
+  email,
+  workHours,
+  catalogLinks = defaultCatalogLinks,
+  infoLinks = defaultInfoLinks,
+  tagline = "Складская техника и сервис"
+}: FooterProps) {
   return (
-    <footer className="border-t border-ink-100 bg-ink-700 py-10 text-ink-100">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm sm:flex-row sm:justify-between">
-        <div>
-          <p className="font-semibold text-white">{companyName}</p>
-          <p className="mt-1 text-ink-200">{address}</p>
+    <footer className="bg-ink-800 text-sm text-ink-200">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col gap-2">
+          <a href="/" className="mb-1 text-2xl" aria-label="На главную">
+            <Logo tone="light" />
+          </a>
+          <p>{companyName}</p>
+          <p className="text-ink-300">{tagline}</p>
         </div>
-        <div className="flex flex-col gap-1">
-          <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="hover:text-white">
-            {phone}
-          </a>
-          {phoneLandline && (
-            <a href={`tel:${phoneLandline.replace(/[^+\d]/g, "")}`} className="hover:text-white">
-              {phoneLandline}
-            </a>
-          )}
-          <a href={`mailto:${email}`} className="hover:text-white">
-            {email}
-          </a>
-          {workHours && <span className="text-ink-300">{workHours}</span>}
+
+        <nav aria-label="Каталог">
+          <ColumnTitle>Каталог</ColumnTitle>
+          <ul className="flex flex-col gap-1.5">
+            {catalogLinks.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} className={linkClassName}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav aria-label="Покупателям">
+          <ColumnTitle>Покупателям</ColumnTitle>
+          <ul className="flex flex-col gap-1.5">
+            {infoLinks.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} className={linkClassName}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div>
+          <ColumnTitle>Контакты</ColumnTitle>
+          <ul className="flex flex-col gap-1.5">
+            <li>
+              <a href={telHref(phone)} className={`font-semibold text-white ${linkClassName}`}>
+                {phone}
+              </a>
+            </li>
+            {phoneLandline && (
+              <li>
+                <a href={telHref(phoneLandline)} className={linkClassName}>
+                  {phoneLandline}
+                </a>
+              </li>
+            )}
+            <li>
+              <a href={`mailto:${email}`} className={linkClassName}>
+                {email}
+              </a>
+            </li>
+            <li>{address}</li>
+            {workHours && <li className="text-ink-300">{workHours}</li>}
+          </ul>
         </div>
       </div>
-      <div className="mx-auto mt-6 max-w-6xl border-t border-ink-600 px-4 pt-4">
-        <p className="text-xs text-ink-300">
-          Обращаем ваше внимание на то, что вся представленная на сайте информация носит исключительно
-          информационный характер и ни при каких условиях не является публичной офертой определяемой положениями
-          Статьи 437(2) Гражданского кодекса Российской Федерации.
-        </p>
-        <a href="/pages/privacy" className="mt-2 inline-block text-xs text-ink-300 underline hover:text-white">
-          Политика конфиденциальности
-        </a>
+      <div className="border-t border-ink-700">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-ink-300">
+          <p>
+            Обращаем ваше внимание на то, что вся представленная на сайте информация носит исключительно
+            информационный характер и ни при каких условиях не является публичной офертой определяемой положениями
+            Статьи 437(2) Гражданского кодекса Российской Федерации.
+          </p>
+          <a href="/pages/privacy" className="self-start underline hover:text-white">
+            Политика конфиденциальности
+          </a>
+        </div>
       </div>
     </footer>
   );
