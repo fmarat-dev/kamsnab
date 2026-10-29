@@ -66,6 +66,7 @@ export async function CategoryListingPage({ slug, page }: { slug: string; page: 
         products={listing.products}
         categorySlug={slug}
         initialSearchTerm=""
+        intro={`${listing.total > 0 ? `${listing.total} ${pluralModels(listing.total)} в каталоге. ` : ""}Доставка по России с ближайшего склада, гарантия 12 месяцев или 2000 моточасов.`}
         breadcrumbs={breadcrumbs}
         pagination={
           <Pagination

@@ -72,6 +72,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
       products={listing.products}
       categorySlug={null}
       initialSearchTerm={search ?? ""}
+      intro={
+        search
+          ? `Найдено: ${listing.total}.`
+          : "Вилочные погрузчики, штабелёры, ричтраки, тележки и навесное оборудование. Доставка по России с ближайшего склада, гарантия 12 месяцев или 2000 моточасов."
+      }
       pagination={
         <Pagination
           currentPage={page}

@@ -25,7 +25,8 @@ function pageItems(current: number, total: number): (number | "gap")[] {
 export function Pagination({ currentPage, totalPages, hrefForPage }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const linkClass = "rounded-card px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-100";
+  const linkClass =
+    "inline-flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-button border border-ink-100 px-3 text-sm font-semibold text-ink-700 hover:border-ink-300 hover:bg-ink-50";
 
   return (
     <nav aria-label="Страницы каталога" className="flex flex-wrap items-center gap-1">
@@ -43,7 +44,7 @@ export function Pagination({ currentPage, totalPages, hrefForPage }: PaginationP
           <span
             key={item}
             aria-current="page"
-            className="rounded-card bg-brand-600 px-3 py-2 text-sm font-medium text-white"
+            className="inline-flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-button bg-brand-700 px-3 text-sm font-semibold text-white"
           >
             {item}
           </span>

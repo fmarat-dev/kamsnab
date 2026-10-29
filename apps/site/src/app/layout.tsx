@@ -12,8 +12,11 @@ import "./globals.css";
 
 // Шрифты стиля C: Inter — текст, Oswald — заголовки/цены/логотип.
 // Переменные (--font-inter/--font-oswald) читает tailwind.preset.cjs.
-const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
-const oswald = Oswald({ subsets: ["latin", "cyrillic"], variable: "--font-oswald", display: "swap" });
+// subsets — только то, что предзагружается: текст сайта кириллический, latin
+// (цифры, латиница в названиях моделей) подгрузится по unicode-range сам —
+// лишние preload-шрифты на мобильном отодвигали LCP.
+const inter = Inter({ subsets: ["cyrillic"], variable: "--font-inter", display: "swap" });
+const oswald = Oswald({ subsets: ["cyrillic"], variable: "--font-oswald", display: "swap" });
 
 const defaultDescription =
   "Продажа и обслуживание вилочных погрузчиков, штабелёров и складской техники в Чебоксарах. Доставка по всей России.";

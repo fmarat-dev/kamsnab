@@ -119,7 +119,7 @@ export function createKamsnabClient(url: string) {
     },
 
     getSettings(): Promise<Settings> {
-      return directus.request(readSingleton("settings"));
+      return directus.request(readSingleton("settings")) as Promise<Settings>;
     },
 
     async getStats(): Promise<{ categories: number; products: number }> {

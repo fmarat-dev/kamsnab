@@ -63,6 +63,9 @@ export interface Settings {
   work_hours: string;
   telegram_manager_username: string;
   max_manager_link: string;
+  // «Хит продаж» на главной (m2o на products). Поля может не быть в CMS
+  // (старая схема/нет прав) — тогда сайт берёт товар по умолчанию.
+  featured_product?: string | Product | null;
 }
 
 export interface KamsnabSchema {
