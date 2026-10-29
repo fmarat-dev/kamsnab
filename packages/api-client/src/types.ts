@@ -4,6 +4,7 @@ export interface Category {
   slug: string;
   sort: number | null;
   image: string | null;
+  seo_text?: string | null;
 }
 
 export interface ProductAttribute {

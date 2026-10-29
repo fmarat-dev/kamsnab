@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { kamsnab } from "@/lib/directus";
+import { Container } from "@kamsnab/ui";
+import { sanitizeRichText } from "@/lib/sanitize";
 import { safeJsonLd, breadcrumbJsonLd } from "@/lib/site";
 import { Pagination } from "@/components/Pagination";
 import { CatalogClient } from "../../CatalogClient";
@@ -77,6 +79,15 @@ export async function CategoryListingPage({ slug, page }: { slug: string; page: 
           />
         }
       />
+      {/* Текст только на первой странице — на страницах 2+ он был бы дублем. */}
+      {page === 1 && category.seo_text?.trim() && (
+        <Container>
+          <section
+            className="prose prose-sm max-w-3xl pb-12 text-ink-600 prose-headings:font-display prose-headings:uppercase prose-headings:text-ink-800"
+            dangerouslySetInnerHTML={{ __html: sanitizeRichText(category.seo_text) }}
+          />
+        </Container>
+      )}
     </>
   );
 }

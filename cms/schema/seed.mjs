@@ -123,6 +123,12 @@ async function main() {
     sortField
   ]);
   await ensureImageField("categories", "image");
+  // SEO-текст под списком товаров категории (только на первой странице).
+  await ensureField("categories", {
+    field: "seo_text",
+    type: "text",
+    meta: { interface: "input-rich-text-html", note: "SEO-текст под списком товаров" }
+  });
 
   await ensureCollection("pages", [
     idField,
