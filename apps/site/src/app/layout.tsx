@@ -4,7 +4,7 @@ import Script from "next/script";
 import { Heart, GitCompare } from "lucide-react";
 import { Footer } from "@kamsnab/ui";
 import { kamsnab } from "@/lib/directus";
-import { siteUrl, siteName, safeJsonLd } from "@/lib/site";
+import { siteUrl, siteName, safeJsonLd, openingHoursSpecification } from "@/lib/site";
 import { getCbrRates } from "@/lib/currency";
 import { SiteHeader } from "./SiteHeader";
 import "./globals.css";
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     description: defaultDescription
   },
   twitter: {
-    card: "summary"
+    card: "summary_large_image"
   }
 };
 
@@ -58,16 +58,24 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     getCbrRates()
   ]);
 
+  // LocalBusiness — для региональной привязки к Чебоксарам в выдаче.
   const organizationJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "LocalBusiness"],
     name: settings?.company_name ?? siteName,
     url: siteUrl,
+    // PNG 180×180 из app/apple-icon.tsx (растровый логотип надёжнее SVG для поисковиков).
+    logo: `${siteUrl}/apple-icon`,
+    image: `${siteUrl}/opengraph-image`,
     telephone: settings?.phone ?? undefined,
     email: settings?.email ?? undefined,
-    address: settings?.address
-      ? { "@type": "PostalAddress", streetAddress: settings.address }
-      : undefined
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: settings?.address ?? "г. Чебоксары, ул. Вурнарское шоссе, д.11, офис 2",
+      addressLocality: "Чебоксары",
+      addressCountry: "RU"
+    },
+    openingHoursSpecification
   };
 
   return (

@@ -7,9 +7,40 @@ import { ServiceLeadForm } from "./ServiceLeadForm";
 import { PageHighlights } from "./PageHighlights";
 import { pageHighlights } from "./pageHighlights.data";
 
-function excerptFromHtml(html: string, maxLength = 160): string {
-  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+const HTML_ENTITIES: Record<string, string> = {
+  "&nbsp;": " ",
+  "&amp;": "&",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&laquo;": "«",
+  "&raquo;": "»",
+  "&mdash;": "—",
+  "&ndash;": "–"
+};
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, (entity) => HTML_ENTITIES[entity] ?? " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Meta description страницы: первый абзац <p> без заголовков (раньше текст
+// склеивался вместе с <h2> — «Гарантия 12 месяцев… На всю технику…»), обрезка
+// по границе слова. Отдельного поля seo_description в Directus нет.
+function excerptFromHtml(html: string, maxLength = 155): string {
+  const firstParagraph = Array.from(html.matchAll(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/gi))
+    .map((match) => htmlToText(match[1]))
+    .find((text) => text.length > 0);
+  // Абзацев нет — берём весь текст, но без заголовков.
+  const text = firstParagraph ?? htmlToText(html.replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, " "));
+  if (text.length <= maxLength) return text;
+  const cut = text.slice(0, maxLength - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > maxLength / 2 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.—–-]+$/, "")}…`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

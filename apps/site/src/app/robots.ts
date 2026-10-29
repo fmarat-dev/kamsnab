@@ -5,9 +5,9 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
-      // Персональные страницы без своего контента — крауту там нечего индексировать.
-      disallow: ["/favorites", "/compare"]
+      // /favorites и /compare не закрываем: там meta robots noindex (их layout.tsx),
+      // а Disallow помешал бы краулеру его увидеть.
+      allow: "/"
     },
     sitemap: `${siteUrl}/sitemap.xml`
   };

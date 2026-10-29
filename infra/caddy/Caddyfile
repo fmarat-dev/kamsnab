@@ -2,6 +2,11 @@ kam-snab.ru {
 	reverse_proxy site:3000
 }
 
+# www → основной домен (308 сохраняет метод). Нужна DNS-запись www → тот же IP.
+www.kam-snab.ru {
+	redir https://kam-snab.ru{uri} 308
+}
+
 tg.kam-snab.ru {
 	reverse_proxy miniapp-telegram:80
 }

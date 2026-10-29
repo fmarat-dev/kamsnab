@@ -6,7 +6,7 @@ import { assetUrl, getProductBadge, type ProductAttribute } from "@kamsnab/api-c
 import { Container, Breadcrumbs, ProductCard } from "@kamsnab/ui";
 import { kamsnab, directusUrl } from "@/lib/directus";
 import { ProductCardImage } from "@/components/ProductCardImage";
-import { siteUrl, safeJsonLd } from "@/lib/site";
+import { siteUrl, safeJsonLd, breadcrumbJsonLd } from "@/lib/site";
 import { ProductLeadForm } from "./ProductLeadForm";
 import { ProductGallery } from "./ProductGallery";
 import { ProductActions } from "./ProductActions";
@@ -68,6 +68,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         .slice(0, 8)
     : [];
 
+  const breadcrumbItems = [
+    { label: "Каталог", href: "/catalog" },
+    ...(category ? [{ label: category.name, href: `/catalog/category/${category.slug}` }] : []),
+    { label: product.title }
+  ];
+
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -76,13 +82,21 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     description: product.short_description ?? undefined,
     image: galleryImages.length > 0 ? galleryImages : undefined,
     category: category?.name,
-    offers: {
-      "@type": "Offer",
-      url: `${siteUrl}/catalog/${product.slug}`,
-      priceCurrency: "RUB",
-      price: product.price ?? undefined,
-      availability: "https://schema.org/InStock"
-    }
+    // Offer без цены невалиден для Яндекса и Google — у товаров «по запросу»
+    // offers не выводим совсем.
+    ...(product.price != null
+      ? {
+          offers: {
+            "@type": "Offer",
+            url: `${siteUrl}/catalog/${product.slug}`,
+            priceCurrency: "RUB",
+            price: product.price,
+            // Поля наличия в Directus нет. InStock для товаров с ценой — временное
+            // решение до решения владельца (добавить поле наличия или PreOrder).
+            availability: "https://schema.org/InStock"
+          }
+        }
+      : {})
   };
 
   return (
@@ -92,13 +106,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }}
       />
-      <Breadcrumbs
-        items={[
-          { label: "Каталог", href: "/catalog" },
-          ...(category ? [{ label: category.name, href: `/catalog/category/${category.slug}` }] : []),
-          { label: product.title }
-        ]}
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd(breadcrumbItems)) }}
       />
+      <Breadcrumbs items={breadcrumbItems} />
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[2fr_1fr]">
         <div className="flex flex-col gap-4">
           <ProductGallery images={galleryImages} title={product.title} />

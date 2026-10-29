@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Container, Breadcrumbs, CategoryFilters, ProductCard, type CategoryOption } from "@kamsnab/ui";
+import {
+  Container,
+  Breadcrumbs,
+  CategoryFilters,
+  ProductCard,
+  type BreadcrumbItem,
+  type CategoryOption
+} from "@kamsnab/ui";
 import type { ProductCardItem } from "@/lib/product-card";
 import { ProductCardImage } from "@/components/ProductCardImage";
 
@@ -17,6 +24,9 @@ interface CatalogContentProps {
   initialSearchTerm: string;
   // Готовая серверная разметка пагинации (<Pagination />) — обычные ссылки.
   pagination?: ReactNode;
+  // Готовые крошки с сервера (по ним же строится BreadcrumbList JSON-LD).
+  // Без них — вычисляются из активной категории, как раньше.
+  breadcrumbs?: BreadcrumbItem[];
 }
 
 function searchHref(term: string) {
@@ -24,7 +34,14 @@ function searchHref(term: string) {
   return trimmed ? `/catalog?search=${encodeURIComponent(trimmed)}` : "/catalog";
 }
 
-function CatalogContent({ categories, products, categorySlug, initialSearchTerm, pagination }: CatalogContentProps) {
+function CatalogContent({
+  categories,
+  products,
+  categorySlug,
+  initialSearchTerm,
+  pagination,
+  breadcrumbs
+}: CatalogContentProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [isPending, startTransition] = useTransition();
@@ -61,10 +78,12 @@ function CatalogContent({ categories, products, categorySlug, initialSearchTerm,
   return (
     <Container className="flex flex-col gap-6 py-10">
       <Breadcrumbs
-        items={[
-          ...(activeCategory ? [{ label: "Каталог", href: "/catalog" }] : []),
-          { label: activeCategory?.name ?? "Каталог" }
-        ]}
+        items={
+          breadcrumbs ?? [
+            ...(activeCategory ? [{ label: "Каталог", href: "/catalog" }] : []),
+            { label: activeCategory?.name ?? "Каталог" }
+          ]
+        }
       />
       <h1 className="text-2xl font-bold text-ink-800">{activeCategory?.name ?? "Каталог"}</h1>
       <form role="search" onSubmit={handleSubmit} className="w-full max-w-sm">

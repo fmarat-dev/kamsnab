@@ -6,7 +6,8 @@ const staticPages = ["", "/catalog", "/contacts", "/pages/service", "/pages/paym
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories] = await Promise.all([
-    kamsnab.getProducts().catch(() => []),
+    // Только поля карточки — описания и характеристики sitemap не нужны.
+    kamsnab.getProducts({ fields: "card" }).catch(() => []),
     kamsnab.getCategories().catch(() => [])
   ]);
 
