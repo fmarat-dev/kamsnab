@@ -28,4 +28,7 @@ jobs:
             # правки, сделанные только в Directus (без пуша кода).
             docker compose build --no-cache site miniapp-telegram miniapp-max
             docker compose up -d
+            # Caddyfile примонтирован томом: up -d не пересоздаёт caddy, если
+            # docker-compose.yml не менялся, а сам Caddy файл не перечитывает.
+            docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
             docker image prune -f
